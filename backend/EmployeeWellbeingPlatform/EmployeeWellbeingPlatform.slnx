@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="EmployeeWellbeingPlatform.Api/EmployeeWellbeingPlatform.Api.csproj" />
+  <Project Path="EmployeeWellbeingPlatform.Application/EmployeeWellbeingPlatform.Application.csproj" />
+  <Project Path="EmployeeWellbeingPlatform.Domain/EmployeeWellbeingPlatform.Domain.csproj" />
+  <Project Path="EmployeeWellbeingPlatform.Infrastructure/EmployeeWellbeingPlatform.Infrastructure.csproj" />
+</Solution>

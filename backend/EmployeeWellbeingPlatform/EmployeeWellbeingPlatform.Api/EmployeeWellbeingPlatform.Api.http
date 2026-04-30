@@ -1,0 +1,6 @@
+@EmployeeWellbeingPlatform.Api_HostAddress = http://localhost:5049
+
+GET {{EmployeeWellbeingPlatform.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
