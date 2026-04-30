@@ -9,6 +9,7 @@ namespace EmployeeWellbeingPlatform.Application.Auth.Services;
 public class AuthService
 {
     private readonly IUserRepository _userRepository;
+    private readonly IJwtTokenGenerator _jwtTokenGenerator;
 
     public AuthService(IUserRepository userRepository)
     {
@@ -52,5 +53,34 @@ public class AuthService
         var hash = sha256.ComputeHash(bytes);
 
         return Convert.ToBase64String(hash);
+    }
+
+
+    public AuthService(IUserRepository userRepository, IJwtTokenGenerator jwtTokenGenerator)
+    {
+        _userRepository = userRepository;
+        _jwtTokenGenerator = jwtTokenGenerator;
+    }
+
+    public async Task<LoginResponse?> LoginAsync(LoginRequestDto request)
+    {
+        var user = await _userRepository.GetByEmailAsync(request.Email);
+
+        if (user == null)
+            return null;
+
+        var passwordHash = HashPassword(request.Password);
+
+        if (user.PasswordHash != passwordHash)
+            return null;
+
+        var token = _jwtTokenGenerator.GenerateToken(user);
+
+        return new LoginResponse
+        {
+            Token = token,
+            Email = user.Email,
+            Role = user.Role
+        };
     }
 }

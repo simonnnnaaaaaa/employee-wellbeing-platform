@@ -2,6 +2,8 @@
 using EmployeeWellbeingPlatform.Application.Auth.Services;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace EmployeeWellbeingPlatform.Api.Controllers;
 
@@ -27,5 +29,34 @@ public class AuthController : ControllerBase
         }
 
         return Ok("User registered successfully");
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(LoginRequestDto request)
+    {
+        var result = await _authService.LoginAsync(request);
+
+        if (result == null)
+        {
+            return Unauthorized("Invalid credentials");
+        }
+
+        return Ok(result);
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var email = User.FindFirstValue(ClaimTypes.Email);
+        var role = User.FindFirstValue(ClaimTypes.Role);
+
+        return Ok(new
+        {
+            userId,
+            email,
+            role
+        });
     }
 }
