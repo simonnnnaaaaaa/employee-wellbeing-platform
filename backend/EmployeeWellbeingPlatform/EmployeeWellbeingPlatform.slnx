@@ -3,4 +3,5 @@
   <Project Path="EmployeeWellbeingPlatform.Application/EmployeeWellbeingPlatform.Application.csproj" />
   <Project Path="EmployeeWellbeingPlatform.Domain/EmployeeWellbeingPlatform.Domain.csproj" />
   <Project Path="EmployeeWellbeingPlatform.Infrastructure/EmployeeWellbeingPlatform.Infrastructure.csproj" />
+  <Project Path="EmployeeWellbeingPlatform.UnitTests/EmployeeWellbeingPlatform.UnitTests.csproj" Id="ea28b5cc-1bee-49f8-abf0-016878ebeafc" />
 </Solution>
