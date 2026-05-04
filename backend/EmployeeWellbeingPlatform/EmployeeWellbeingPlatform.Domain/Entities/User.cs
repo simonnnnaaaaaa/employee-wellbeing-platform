@@ -17,4 +17,6 @@ public class User
     public string Department { get; set; } = "General";
 
     public DateTime CreatedAt { get; set; }
+
+    public ICollection<CheckIn> CheckIns { get; set; } = new List<CheckIn>();
 }
