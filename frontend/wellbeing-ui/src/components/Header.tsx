@@ -24,6 +24,12 @@ function Header() {
             <button onClick={handleLogout} style={{ marginLeft: "10px" }}>
                 Logout
             </button>
+
+            {role === "Admin" && (
+                <button onClick={() => navigate("/admin/users")}>
+                    Manage Users
+                </button>
+            )}
         </div>
     );
 }
