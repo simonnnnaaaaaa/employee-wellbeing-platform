@@ -4,6 +4,7 @@ import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HRDashboardPage from "./pages/HRDashboardPage";
+import AdminUsersPage from "./pages/AdminUsersPage";
 
 function App() {
     return (
@@ -24,6 +25,14 @@ function App() {
                     element={
                         <ProtectedRoute requiredRole="HR">
                             <HRDashboardPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/users"
+                    element={
+                        <ProtectedRoute requiredRole="Admin">
+                            <AdminUsersPage />
                         </ProtectedRoute>
                     }
                 />

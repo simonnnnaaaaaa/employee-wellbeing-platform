@@ -31,10 +31,12 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<ICheckInRepository, CheckInRepository>();
 builder.Services.AddScoped<IHRDashboardRepository, HRDashboardRepository>();
+builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CheckInService>();
 builder.Services.AddScoped<HRService>();
+builder.Services.AddScoped<AdminService>();
 
 
 builder.Services.AddControllers();
