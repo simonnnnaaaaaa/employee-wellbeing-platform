@@ -1,7 +1,15 @@
 import Header from "../components/Header";
 import { useEffect, useState } from "react";
 import { createCheckIn, getMyCheckIns } from "../services/checkInService";
-
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    Tooltip,
+    Legend,
+    CartesianGrid,
+} from "recharts";
 
 type CheckIn = {
     id: string;
@@ -53,6 +61,14 @@ function DashboardPage() {
     useEffect(() => {
         loadCheckIns();
     }, []);
+
+    const chartData = [...checkIns]
+        .reverse()
+        .map((checkIn) => ({
+            date: new Date(checkIn.createdAt).toLocaleDateString(),
+            stress: checkIn.stressLevel,
+            energy: checkIn.energyLevel,
+        }));
 
     return (
         <div>
@@ -112,6 +128,22 @@ function DashboardPage() {
 
                 <button type="submit">Save check-in</button>
             </form>
+
+            <h3>Wellbeing evolution</h3>
+
+            {chartData.length === 0 ? (
+                <p>No data available for chart.</p>
+            ) : (
+                <LineChart width={700} height={300} data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis domain={[1, 10]} />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="stress" name="Stress" />
+                    <Line type="monotone" dataKey="energy" name="Energy" />
+                </LineChart>
+            )}
 
             <h3>My previous check-ins</h3>
 
