@@ -12,5 +12,7 @@ public class UserAdminDto
 
     public string Role { get; set; } = null!;
 
+    public Guid? DepartmentId { get; set; }
+
     public string Department { get; set; } = null!;
 }

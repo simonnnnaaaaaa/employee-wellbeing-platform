@@ -40,13 +40,34 @@ public class AdminController : ControllerBase
     [HttpPut("users/{id}/department")]
     public async Task<IActionResult> UpdateDepartment(Guid id, UpdateUserDepartmentDto dto)
     {
-        var result = await _adminService.UpdateDepartmentAsync(id, dto.Department);
+        var result = await _adminService.UpdateDepartmentAsync(id, dto.DepartmentId);
 
         if (!result)
         {
-            return BadRequest("Invalid department or user not found");
+            return BadRequest("Invalid user or department");
         }
 
         return Ok("Department updated");
+    }
+
+    [HttpGet("departments")]
+    public async Task<IActionResult> GetDepartments()
+    {
+        var departments = await _adminService.GetDepartmentsAsync();
+
+        return Ok(departments);
+    }
+
+    [HttpPost("departments")]
+    public async Task<IActionResult> CreateDepartment(CreateDepartmentDto dto)
+    {
+        var result = await _adminService.CreateDepartmentAsync(dto.Name);
+
+        if (!result)
+        {
+            return BadRequest("Invalid department name or department already exists");
+        }
+
+        return Ok("Department created");
     }
 }

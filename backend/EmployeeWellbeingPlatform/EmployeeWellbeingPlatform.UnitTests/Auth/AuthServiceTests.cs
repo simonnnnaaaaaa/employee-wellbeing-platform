@@ -44,7 +44,6 @@ public class AuthServiceTests
                 user.LastName == request.LastName &&
                 user.Email == request.Email &&
                 user.Role == "Employee" &&
-                user.Department == "General" &&
                 !string.IsNullOrWhiteSpace(user.PasswordHash)
             )),
             Times.Once
@@ -109,7 +108,7 @@ public class AuthServiceTests
             Email = request.Email,
             PasswordHash = "jZae727K08KaOmKSgOaGzww/XVqGr/PKEgIMkjrcbJI=",
             Role = "Employee",
-            Department = "General",
+            Department = new Department { Id = Guid.NewGuid(), Name = "General" },
             CreatedAt = DateTime.UtcNow
         };
 
@@ -191,7 +190,7 @@ public class AuthServiceTests
             Email = request.Email,
             PasswordHash = "jZae727K08KaOmKSgOaGzww/XVqGr/PKEgIMkjrcbJI=",
             Role = "Employee",
-            Department = "General",
+            Department = new Department { Id = Guid.NewGuid(), Name = "General" },
             CreatedAt = DateTime.UtcNow
         };
 

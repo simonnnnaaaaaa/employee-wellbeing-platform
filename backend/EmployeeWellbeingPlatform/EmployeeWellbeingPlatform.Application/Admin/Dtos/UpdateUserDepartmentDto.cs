@@ -2,5 +2,5 @@
 
 public class UpdateUserDepartmentDto
 {
-    public string Department { get; set; } = null!;
+    public Guid DepartmentId { get; set; }
 }

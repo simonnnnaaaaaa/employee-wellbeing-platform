@@ -5,6 +5,9 @@ import {
   updateUserDepartment,
   updateUserRole,
 } from "../services/adminService";
+import { getDepartments } from "../services/adminService";
+import { createDepartment } from "../services/adminService";
+
 
 type User = {
   id: string;
@@ -13,10 +16,22 @@ type User = {
   email: string;
   role: string;
   department: string;
+  departmentId?: string;
 };
 
 function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [departments, setDepartments] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [editingDepartmentUserId, setEditingDepartmentUserId] = useState<string | null>(null);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
+  const [editingRoleUserId, setEditingRoleUserId] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState("");
+  const [newDepartmentName, setNewDepartmentName] = useState("");
+  const [departmentMessage, setDepartmentMessage] = useState("");
+
+
 
   async function loadUsers() {
     const data = await getUsers();
@@ -33,8 +48,27 @@ function AdminUsersPage() {
     await loadUsers();
   }
 
+  async function loadDepartments() {
+    const data = await getDepartments();
+    setDepartments(data);
+  }
+
+  async function handleCreateDepartment(event: React.FormEvent) {
+    event.preventDefault();
+
+    try {
+      await createDepartment(newDepartmentName);
+      setDepartmentMessage("Department created successfully.");
+      setNewDepartmentName("");
+      await loadDepartments();
+    } catch {
+      setDepartmentMessage("Could not create department.");
+    }
+  }
+
   useEffect(() => {
     loadUsers();
+    loadDepartments();
   }, []);
 
   return (
@@ -42,6 +76,21 @@ function AdminUsersPage() {
       <Header />
 
       <h2>Admin - User Management</h2>
+
+      <h3>Departments</h3>
+
+      {departmentMessage && <p>{departmentMessage}</p>}
+
+      <form onSubmit={handleCreateDepartment}>
+        <input
+          type="text"
+          placeholder="New department name"
+          value={newDepartmentName}
+          onChange={(event) => setNewDepartmentName(event.target.value)}
+        />
+
+        <button type="submit">Add department</button>
+      </form>
 
       {users.length === 0 ? (
         <p>No users found.</p>
@@ -64,24 +113,102 @@ function AdminUsersPage() {
                 </td>
                 <td>{user.email}</td>
                 <td>
-                  <select
-                    value={user.role}
-                    onChange={(event) =>
-                      handleRoleChange(user.id, event.target.value)
-                    }
-                  >
-                    <option value="Employee">Employee</option>
-                    <option value="HR">HR</option>
-                    <option value="Admin">Admin</option>
-                  </select>
+                  {editingRoleUserId === user.id ? (
+                    <>
+                      <select
+                        value={selectedRole}
+                        onChange={(event) => setSelectedRole(event.target.value)}
+                      >
+                        <option value="Employee">Employee</option>
+                        <option value="HR">HR</option>
+                        <option value="Admin">Admin</option>
+                      </select>
+
+                      <button
+                        onClick={async () => {
+                          await handleRoleChange(user.id, selectedRole);
+                          setEditingRoleUserId(null);
+                          setSelectedRole("");
+                        }}
+                      >
+                        Save
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setEditingRoleUserId(null);
+                          setSelectedRole("");
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span>{user.role}</span>
+
+                      <button
+                        onClick={() => {
+                          setEditingRoleUserId(user.id);
+                          setSelectedRole(user.role);
+                        }}
+                      >
+                        Edit
+                      </button>
+                    </>
+                  )}
                 </td>
                 <td>
-                  <input
-                    value={user.department}
-                    onChange={(event) =>
-                      handleDepartmentChange(user.id, event.target.value)
-                    }
-                  />
+                  {editingDepartmentUserId === user.id ? (
+                    <>
+                      <select
+                        value={selectedDepartmentId}
+                        onChange={(event) => setSelectedDepartmentId(event.target.value)}
+                      >
+                        <option value="">Select department</option>
+
+                        {departments.map((dep) => (
+                          <option key={dep.id} value={dep.id}>
+                            {dep.name}
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        onClick={async () => {
+                          if (!selectedDepartmentId) return;
+
+                          await handleDepartmentChange(user.id, selectedDepartmentId);
+                          setEditingDepartmentUserId(null);
+                          setSelectedDepartmentId("");
+                        }}
+                      >
+                        Save
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setEditingDepartmentUserId(null);
+                          setSelectedDepartmentId("");
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span>{user.department || "Unassigned"}</span>
+
+                      <button
+                        onClick={() => {
+                          setEditingDepartmentUserId(user.id);
+                          setSelectedDepartmentId(user.departmentId || "");
+                        }}
+                      >
+                        Edit
+                      </button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}
