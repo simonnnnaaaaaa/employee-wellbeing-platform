@@ -30,7 +30,7 @@ public class HRDashboardRepository : IHRDashboardRepository
             HighStressCount = checkIns.Count(c => c.StressLevel >= 8),
 
             Departments = checkIns
-                .GroupBy(c => c.User.Department)
+                .GroupBy(c => c.User.Department != null ? c.User.Department.Name : "Unassigned")
                 .Select(group => new DepartmentWellbeingSummaryDto
                 {
                     Department = group.Key,

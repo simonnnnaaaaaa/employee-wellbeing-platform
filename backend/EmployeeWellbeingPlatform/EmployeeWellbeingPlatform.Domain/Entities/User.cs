@@ -14,7 +14,9 @@ public class User
 
     public string Role { get; set; } = null!;
 
-    public string Department { get; set; } = "General";
+    public Guid? DepartmentId { get; set; }
+
+    public Department? Department { get; set; } = null!;
 
     public DateTime CreatedAt { get; set; }
 

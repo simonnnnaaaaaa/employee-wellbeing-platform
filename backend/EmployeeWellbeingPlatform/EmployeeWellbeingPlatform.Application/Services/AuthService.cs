@@ -37,7 +37,6 @@ public class AuthService
             Email = request.Email,
             PasswordHash = passwordHash,
             Role = "Employee",
-            Department = "General",
             CreatedAt = DateTime.UtcNow
         };
 

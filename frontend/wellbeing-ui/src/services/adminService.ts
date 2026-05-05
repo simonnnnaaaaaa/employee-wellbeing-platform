@@ -28,12 +28,41 @@ export async function updateUserRole(id: string, role: string) {
   );
 }
 
-export async function updateUserDepartment(id: string, department: string) {
+export async function updateUserDepartment(id: string, departmentId: string) {
   const token = localStorage.getItem("token");
 
   await axios.put(
     `${API_URL}/users/${id}/department`,
-    { department },
+    { departmentId },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+}
+
+export async function getDepartments() {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.get(
+    "https://localhost:7258/api/admin/departments",
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function createDepartment(name: string) {
+  const token = localStorage.getItem("token");
+
+  await axios.post(
+    "https://localhost:7258/api/admin/departments",
+    { name },
     {
       headers: {
         Authorization: `Bearer ${token}`,

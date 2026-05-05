@@ -16,7 +16,9 @@ public class AdminRepository : IAdminRepository
 
     public async Task<List<User>> GetAllUsersAsync()
     {
-        return await _context.Users.ToListAsync();
+        return await _context.Users
+            .Include(u => u.Department)
+            .ToListAsync();
     }
 
     public async Task<User?> GetByIdAsync(Guid id)
