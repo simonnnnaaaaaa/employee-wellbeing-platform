@@ -27,7 +27,14 @@ function LoginPage() {
       localStorage.setItem("firstName", result.firstName);
       localStorage.setItem("lastName", result.lastName);
 
-      navigate("/dashboard");
+      if (result.role === "Admin") {
+        navigate("/admin/users");
+      } else if (result.role === "HR") {
+        navigate("/hr-dashboard");
+      } else {
+        navigate("/dashboard");
+      }
+      
     } catch (err) {
       console.error("Login failed", err);
       setError("Invalid email or password. Please try again.");
