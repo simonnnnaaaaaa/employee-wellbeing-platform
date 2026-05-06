@@ -61,7 +61,7 @@ public class AuthService
         _jwtTokenGenerator = jwtTokenGenerator;
     }
 
-    public async Task<LoginResponse?> LoginAsync(LoginRequestDto request)
+    public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
 
@@ -75,11 +75,13 @@ public class AuthService
 
         var token = _jwtTokenGenerator.GenerateToken(user);
 
-        return new LoginResponse
+        return new LoginResponseDto
         {
             Token = token,
             Email = user.Email,
-            Role = user.Role
+            Role = user.Role,
+            FirstName = user.FirstName,
+            LastName = user.LastName
         };
     }
 }

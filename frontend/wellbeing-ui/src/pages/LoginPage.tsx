@@ -24,6 +24,8 @@ function LoginPage() {
       localStorage.setItem("token", result.token);
       localStorage.setItem("email", result.email);
       localStorage.setItem("role", result.role);
+      localStorage.setItem("firstName", result.firstName);
+      localStorage.setItem("lastName", result.lastName);
 
       navigate("/dashboard");
     } catch (err) {
