@@ -92,7 +92,7 @@ function LoginPage() {
               <input
                 id="email"
                 type="email"
-                placeholder="you@company.com"
+                placeholder="you@mail.com"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
