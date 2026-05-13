@@ -35,12 +35,14 @@ builder.Services.AddScoped<IHRDashboardRepository, HRDashboardRepository>();
 builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddHttpClient<IWellbeingAiTextGenerator, OpenAiWellbeingAiTextGenerator>();
+builder.Services.AddHttpClient<IHrWellbeingAiTextGenerator, OpenAiHrWellbeingAiTextGenerator>();
 
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CheckInService>();
 builder.Services.AddScoped<HRService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<WellbeingInsightService>();
+builder.Services.AddScoped<HrWellbeingSummaryService>();
 
 
 builder.Services.AddControllers();
