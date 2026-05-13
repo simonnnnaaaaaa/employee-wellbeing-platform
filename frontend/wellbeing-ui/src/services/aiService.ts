@@ -20,3 +20,12 @@ export async function getMyWellbeingInsight() {
 
   return response.data;
 }
+
+export async function getHrWellbeingSummary() {
+  const response = await axios.get(
+    `${API_URL}/hr-wellbeing-summary`,
+    getAuthHeaders()
+  );
+
+  return response.data;
+}

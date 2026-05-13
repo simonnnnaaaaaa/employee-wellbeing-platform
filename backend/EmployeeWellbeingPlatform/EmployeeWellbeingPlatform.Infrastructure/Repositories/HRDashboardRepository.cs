@@ -18,6 +18,7 @@ public class HRDashboardRepository : IHRDashboardRepository
     {
         var checkIns = await _context.CheckIns
             .Include(c => c.User)
+            .ThenInclude(u => u.Department)
             .ToListAsync();
 
         var totalCheckIns = checkIns.Count;

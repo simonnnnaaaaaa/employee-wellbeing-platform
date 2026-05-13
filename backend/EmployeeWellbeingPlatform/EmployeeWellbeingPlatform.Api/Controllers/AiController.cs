@@ -12,10 +12,14 @@ namespace EmployeeWellbeingPlatform.Api.Controllers;
 public class AiController : ControllerBase
 {
     private readonly WellbeingInsightService _wellbeingInsightService;
+    private readonly HrWellbeingSummaryService _hrWellbeingSummaryService;
 
-    public AiController(WellbeingInsightService wellbeingInsightService)
+    public AiController(
+    WellbeingInsightService wellbeingInsightService,
+    HrWellbeingSummaryService hrWellbeingSummaryService)
     {
         _wellbeingInsightService = wellbeingInsightService;
+        _hrWellbeingSummaryService = hrWellbeingSummaryService;
     }
 
     [HttpGet("my-wellbeing-insight")]
@@ -33,5 +37,14 @@ public class AiController : ControllerBase
         var insight = await _wellbeingInsightService.GetMyInsightAsync(userId);
 
         return Ok(insight);
+    }
+
+    [HttpGet("hr-wellbeing-summary")]
+    [Authorize(Roles = "HR,Admin")]
+    public async Task<IActionResult> GetHrWellbeingSummary()
+    {
+        var summary = await _hrWellbeingSummaryService.GetSummaryAsync();
+
+        return Ok(summary);
     }
 }
