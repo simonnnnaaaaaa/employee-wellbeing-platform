@@ -26,6 +26,10 @@ import {
     TrendingUp,
     Zap,
 } from "lucide-react";
+import PredictiveAlertsCard from "../components/PredictiveAlertsCard";
+import { getPredictiveAlerts } from "../services/predictiveAlertService";
+import type { PredictiveAlert } from "../services/predictiveAlertService";
+
 
 type CheckIn = {
     id: string;
@@ -89,6 +93,9 @@ function DashboardPage() {
     const [insight, setInsight] = useState<WellbeingInsight | null>(null);
     const [insightLoading, setInsightLoading] = useState(true);
 
+    const [predictiveAlerts, setPredictiveAlerts] = useState<PredictiveAlert[]>([]);
+    const [predictiveAlertsLoading, setPredictiveAlertsLoading] = useState(true);
+
     async function handleSubmit(event: React.FormEvent) {
         event.preventDefault();
         setIsSubmitting(true);
@@ -132,6 +139,21 @@ function DashboardPage() {
             setInsightLoading(false);
         }
     }
+
+    useEffect(() => {
+        const fetchPredictiveAlerts = async () => {
+            try {
+                const data = await getPredictiveAlerts();
+                setPredictiveAlerts(data);
+            } catch (error) {
+                console.error("Failed to load predictive alerts:", error);
+            } finally {
+                setPredictiveAlertsLoading(false);
+            }
+        };
+
+        fetchPredictiveAlerts();
+    }, []);
 
     useEffect(() => {
         loadCheckIns();
@@ -244,8 +266,12 @@ function DashboardPage() {
                                 Personalized insight based on your recent check-ins
                             </p>
                         </div>
+
+
+
                     </div>
 
+                    
                     {insightLoading ? (
                         <p className="text-sm text-slate-500">Generating your insight...</p>
                     ) : insight ? (
@@ -286,6 +312,13 @@ function DashboardPage() {
                             No insight available yet.
                         </p>
                     )}
+
+                    <section className="mb-8">
+                        <PredictiveAlertsCard
+                            alerts={predictiveAlerts}
+                            loading={predictiveAlertsLoading}
+                        />
+                    </section>
                 </section>
 
 

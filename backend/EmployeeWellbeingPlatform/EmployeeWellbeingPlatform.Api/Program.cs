@@ -1,10 +1,10 @@
+using EmployeeWellbeingPlatform.Application.Ai;
 using EmployeeWellbeingPlatform.Application.Auth.Services;
 using EmployeeWellbeingPlatform.Application.Interfaces;
 using EmployeeWellbeingPlatform.Application.Services;
 using EmployeeWellbeingPlatform.Infrastructure.Data;
 using EmployeeWellbeingPlatform.Infrastructure.Repositories;
 using EmployeeWellbeingPlatform.Infrastructure.Services;
-using EmployeeWellbeingPlatform.Application.Ai;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -36,6 +36,7 @@ builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddHttpClient<IWellbeingAiTextGenerator, OpenAiWellbeingAiTextGenerator>();
 builder.Services.AddHttpClient<IHrWellbeingAiTextGenerator, OpenAiHrWellbeingAiTextGenerator>();
+builder.Services.AddScoped<IPredictiveAlertService, PredictiveAlertService>();
 
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CheckInService>();
