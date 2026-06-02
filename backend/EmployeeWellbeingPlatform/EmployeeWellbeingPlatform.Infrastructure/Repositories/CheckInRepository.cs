@@ -27,4 +27,12 @@ public class CheckInRepository : ICheckInRepository
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task<List<CheckIn>> GetAllAsync()
+    {
+        return await _context.CheckIns
+            .Include(c => c.User)
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync();
+    }
 }
