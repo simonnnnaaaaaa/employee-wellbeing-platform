@@ -312,7 +312,7 @@ function DashboardPage() {
                             No insight available yet.
                         </p>
                     )}
-
+                    <br></br>
                     <section className="mb-8">
                         <PredictiveAlertsCard
                             alerts={predictiveAlerts}

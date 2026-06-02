@@ -7,4 +7,6 @@ public interface ICheckInRepository
     Task AddAsync(CheckIn checkIn);
 
     Task<List<CheckIn>> GetByUserIdAsync(Guid userId);
+
+    Task<List<CheckIn>> GetAllAsync();
 }

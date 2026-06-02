@@ -25,6 +25,11 @@ import {
 } from "recharts";
 import { getHrWellbeingSummary } from "../services/aiService";
 import { Sparkles } from "lucide-react";
+import HrPredictiveAlertsCard from "../components/HrPredictiveAlertsCard";
+import {
+  getHrPredictiveAlerts,
+  type HrPredictiveAlert,
+} from "../services/hrPredictiveAlertService";
 
 type Department = {
   department: string;
@@ -70,6 +75,11 @@ function HRDashboardPage() {
   const [aiSummary, setAiSummary] = useState<HrAiSummary | null>(null);
   const [aiLoading, setAiLoading] = useState(true);
 
+  const [predictiveAlerts, setPredictiveAlerts] =
+    useState<HrPredictiveAlert[]>([]);
+  const [predictiveAlertsLoading, setPredictiveAlertsLoading] =
+    useState(true);
+
   async function loadData() {
     try {
       const result = await getHRDashboard();
@@ -80,17 +90,27 @@ function HRDashboardPage() {
   }
 
   async function loadAiSummary() {
-  try {
-    const result = await getHrWellbeingSummary();
-    setAiSummary(result);
-  } finally {
-    setAiLoading(false);
+    try {
+      const result = await getHrWellbeingSummary();
+      setAiSummary(result);
+    } finally {
+      setAiLoading(false);
+    }
   }
-}
+
+  async function loadPredictiveAlerts() {
+    try {
+      const data = await getHrPredictiveAlerts();
+      setPredictiveAlerts(data);
+    } finally {
+      setPredictiveAlertsLoading(false);
+    }
+  }
 
   useEffect(() => {
     loadData();
     loadAiSummary();
+    loadPredictiveAlerts();
   }, []);
 
   if (loading || !data) {
@@ -189,65 +209,74 @@ function HRDashboardPage() {
         </section>
 
         <section className="mb-8 rounded-3xl border border-white/70 bg-white/90 p-6 shadow-sm backdrop-blur">
-  <div className="mb-4 flex items-center gap-3">
-    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-100">
-      <Sparkles className="h-5 w-5 text-violet-600" />
-    </div>
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-100">
+              <Sparkles className="h-5 w-5 text-violet-600" />
+            </div>
 
-    <div>
-      <h2 className="text-lg font-semibold text-slate-900">
-        AI Organizational Insight
-      </h2>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">
+                AI Organizational Insight
+              </h2>
 
-      <p className="text-sm text-slate-500">
-        AI-generated wellbeing analysis for HR teams
-      </p>
-    </div>
-  </div>
+              <p className="text-sm text-slate-500">
+                AI-generated wellbeing analysis for HR teams
+              </p>
+            </div>
+          </div>
 
-  {aiLoading ? (
-    <p className="text-sm text-slate-500">
-      Generating AI organizational insight...
-    </p>
-  ) : aiSummary ? (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="rounded-full bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-700">
-          {aiSummary.riskLevel} organizational risk
-        </span>
+          {aiLoading ? (
+            <p className="text-sm text-slate-500">
+              Generating AI organizational insight...
+            </p>
+          ) : aiSummary ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="rounded-full bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-700">
+                  {aiSummary.riskLevel} organizational risk
+                </span>
 
-        <span className="rounded-full bg-rose-100 px-3 py-1 text-sm font-semibold text-rose-700">
-          Highest risk: {aiSummary.highestRiskDepartment}
-        </span>
-      </div>
+                <span className="rounded-full bg-rose-100 px-3 py-1 text-sm font-semibold text-rose-700">
+                  Highest risk: {aiSummary.highestRiskDepartment}
+                </span>
+              </div>
 
-      <p className="text-sm leading-6 text-slate-600">
-        {aiSummary.summary}
-      </p>
+              <p className="text-sm leading-6 text-slate-600">
+                {aiSummary.summary}
+              </p>
 
-      <div>
-        <p className="mb-2 text-sm font-semibold text-slate-800">
-          HR Recommendations
-        </p>
+              <div>
+                <p className="mb-2 text-sm font-semibold text-slate-800">
+                  HR Recommendations
+                </p>
 
-        <ul className="space-y-2">
-          {aiSummary.recommendations.map((recommendation, index) => (
-            <li
-              key={index}
-              className="rounded-2xl bg-violet-50 px-4 py-3 text-sm text-slate-600"
-            >
-              {recommendation}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  ) : (
-    <p className="text-sm text-slate-500">
-      No AI summary available.
-    </p>
-  )}
-</section>
+                <ul className="space-y-2">
+                  {aiSummary.recommendations.map((recommendation, index) => (
+                    <li
+                      key={index}
+                      className="rounded-2xl bg-violet-50 px-4 py-3 text-sm text-slate-600"
+                    >
+                      {recommendation}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">
+              No AI summary available.
+            </p>
+          )}
+
+          <br />
+
+          <section className="mb-8">
+            <HrPredictiveAlertsCard
+              alerts={predictiveAlerts}
+              loading={predictiveAlertsLoading}
+            />
+          </section>
+        </section>
 
         <section className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="rounded-3xl border border-white/70 bg-white/90 p-6 shadow-sm backdrop-blur">
