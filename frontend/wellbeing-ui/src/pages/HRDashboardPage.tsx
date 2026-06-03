@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import { getHRDashboard } from "../services/hrService";
+import { Info } from "lucide-react";
 import {
   Activity,
   AlertTriangle,
@@ -22,6 +23,8 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  Pie,
+  PieChart,
 } from "recharts";
 import { getHrWellbeingSummary } from "../services/aiService";
 import { Sparkles } from "lucide-react";
@@ -48,6 +51,7 @@ type HRDashboardData = {
   energyTrendPercentage: number;
   highStressTrendPercentage: number;
   departments: Department[];
+  moodDistribution: MoodDistribution[];
 };
 
 type HrAiSummary = {
@@ -55,6 +59,12 @@ type HrAiSummary = {
   riskLevel: string;
   highestRiskDepartment: string;
   recommendations: string[];
+};
+
+type MoodDistribution = {
+  mood: string;
+  count: number;
+  percentage: number;
 };
 
 const dateRangeOptions = [
@@ -94,6 +104,91 @@ function getEnergyLevel(energy: number) {
   }
 
   return { label: "Excellent", color: "text-teal-600", bgColor: "bg-teal-100" };
+}
+
+function getMoodColor(mood: string) {
+  switch (mood) {
+    case "Happy":
+      return "#4ade80";
+    case "Neutral":
+      return "#a3a3a3";
+    case "Tired":
+      return "#60a5fa";
+    case "Stressed":
+      return "#fb923c";
+    case "Anxious":
+      return "#fb7185";
+    default:
+      return "#cbd5e1";
+  }
+}
+
+function getMoodWeight(mood: string) {
+  switch (mood) {
+    case "Happy":
+      return 2;
+    case "Neutral":
+      return 1;
+    case "Tired":
+      return -1;
+    case "Stressed":
+    case "Anxious":
+      return -2;
+    default:
+      return 0;
+  }
+}
+
+function calculateMoodHealthScore(moods: MoodDistribution[]) {
+  const totalCount = moods.reduce((sum, item) => sum + item.count, 0);
+
+  if (totalCount === 0) {
+    return 0;
+  }
+
+  const weightedScore = moods.reduce(
+    (sum, item) => sum + getMoodWeight(item.mood) * item.count,
+    0
+  );
+
+  const minScore = -2 * totalCount;
+  const maxScore = 2 * totalCount;
+
+  return Math.round(
+    ((weightedScore - minScore) / (maxScore - minScore)) * 100
+  );
+}
+
+function getMoodHealthLevel(score: number) {
+  if (score >= 75) {
+    return "Strong";
+  }
+
+  if (score >= 55) {
+    return "Moderate";
+  }
+
+  if (score >= 35) {
+    return "At risk";
+  }
+
+  return "Critical";
+}
+
+function getMoodHealthClass(score: number) {
+  if (score >= 75) {
+    return "text-emerald-600";
+  }
+
+  if (score >= 55) {
+    return "text-amber-600";
+  }
+
+  if (score >= 35) {
+    return "text-orange-600";
+  }
+
+  return "text-rose-600";
 }
 
 function getTrendInfo(value: number) {
@@ -136,6 +231,8 @@ function HRDashboardPage() {
     useState<HrPredictiveAlert[]>([]);
   const [predictiveAlertsLoading, setPredictiveAlertsLoading] =
     useState(true);
+
+  const [showMoodInfo, setShowMoodInfo] = useState(false);
 
   async function loadData() {
     try {
@@ -192,6 +289,9 @@ function HRDashboardPage() {
   const energyTrend = getTrendInfo(data.energyTrendPercentage);
   const highStressTrend = getTrendInfo(data.highStressTrendPercentage);
 
+  const moodHealthScore = calculateMoodHealthScore(data.moodDistribution);
+  const moodHealthLevel = getMoodHealthLevel(moodHealthScore);
+
   const chartData = data.departments.map((dep) => ({
     name: dep.department,
     stress: dep.averageStress,
@@ -244,11 +344,10 @@ function HRDashboardPage() {
                 key={option.value}
                 type="button"
                 onClick={() => setSelectedDays(option.value)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                  selectedDays === option.value
-                    ? "bg-green-600 text-white shadow-sm"
-                    : "bg-green-50 text-slate-600 hover:bg-green-100"
-                }`}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${selectedDays === option.value
+                  ? "bg-green-600 text-white shadow-sm"
+                  : "bg-green-50 text-slate-600 hover:bg-green-100"
+                  }`}
               >
                 {option.label}
               </button>
@@ -296,11 +395,10 @@ function HRDashboardPage() {
             <OverviewCard
               label="High Stress Alerts"
               value={data.highStressCount}
-              sublabel={`${
-                data.totalCheckIns > 0
-                  ? ((data.highStressCount / data.totalCheckIns) * 100).toFixed(1)
-                  : "0.0"
-              }% of check-ins`}
+              sublabel={`${data.totalCheckIns > 0
+                ? ((data.highStressCount / data.totalCheckIns) * 100).toFixed(1)
+                : "0.0"
+                }% of check-ins`}
               trend={`${highStressTrend.arrow} ${highStressTrend.display} vs previous period`}
               trendClass={getTrendClass(data.highStressTrendPercentage, true)}
               icon={<AlertTriangle className="h-6 w-6 text-orange-500" />}
@@ -375,6 +473,122 @@ function HRDashboardPage() {
               loading={predictiveAlertsLoading}
             />
           </section>
+        </section>
+
+        <section className="mb-8 rounded-3xl border border-white/70 bg-white/90 p-6 shadow-sm backdrop-blur">
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div>
+              <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900">
+                <Activity className="h-5 w-5 text-green-600" />
+                Mood Distribution
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Breakdown of reported moods for the selected period
+              </p>
+            </div>
+
+            {showMoodInfo && (
+              <div className="mb-6 rounded-2xl border border-green-100 bg-green-50/70 p-4 text-sm text-slate-600">
+                <p className="font-semibold text-slate-800">
+                  How Mood Health is calculated
+                </p>
+
+                <p className="mt-2">
+                  Each mood is assigned a weight: Happy +2, Neutral +1, Tired -1,
+                  Stressed -2 and Anxious -2. The score is calculated from all check-ins
+                  in the selected period and normalized to a 0-100 scale.
+                </p>
+
+                <p className="mt-2">
+                  Higher scores indicate a healthier overall mood pattern, while lower
+                  scores suggest more frequent tired, stressed, or anxious check-ins.
+                </p>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setShowMoodInfo((value) => !value)}
+              className="rounded-full bg-slate-100 p-2 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+              aria-label="Show mood health score explanation"
+            >
+              <Info className="h-4 w-4" />
+            </button>
+          </div>
+
+          {data.moodDistribution.length === 0 ? (
+            <div className="flex h-64 items-center justify-center rounded-2xl bg-slate-50 text-sm text-slate-500">
+              No mood data available for this period.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <div className="relative h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={data.moodDistribution}
+                      dataKey="count"
+                      nameKey="mood"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={75}
+                      outerRadius={105}
+                      paddingAngle={4}
+                    >
+                      {data.moodDistribution.map((entry) => (
+                        <Cell key={entry.mood} fill={getMoodColor(entry.mood)} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                      Mood Health
+                    </p>
+
+                    <p className={`mt-1 text-3xl font-bold ${getMoodHealthClass(moodHealthScore)}`}>
+                      {moodHealthScore}
+                    </p>
+
+                    <p className="text-xs font-medium text-slate-500">
+                      {moodHealthLevel}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col justify-center space-y-3">
+                {data.moodDistribution.map((item) => (
+                  <div
+                    key={item.mood}
+                    className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="h-3 w-3 rounded-full"
+                        style={{ backgroundColor: getMoodColor(item.mood) }}
+                      />
+                      <span className="text-sm font-medium text-slate-700">
+                        {item.mood}
+                      </span>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-slate-900">
+                        {item.percentage.toFixed(1)}%
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {item.count} check-ins
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">

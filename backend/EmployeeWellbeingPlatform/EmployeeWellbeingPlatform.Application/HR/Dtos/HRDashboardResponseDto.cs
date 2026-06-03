@@ -16,5 +16,7 @@ public class HRDashboardResponseDto
 
     public double HighStressTrendPercentage { get; set; }
 
+    public List<MoodDistributionDto> MoodDistribution { get; set; } = new();
+
     public List<DepartmentWellbeingSummaryDto> Departments { get; set; } = new();
 }
