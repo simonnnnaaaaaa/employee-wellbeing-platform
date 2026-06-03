@@ -24,7 +24,7 @@ public class HRDashboardRepositoryTests
         var repository = new HRDashboardRepository(context);
 
         // Act
-        var result = await repository.GetDashboardAsync();
+        var result = await repository.GetDashboardAsync(30);
 
         // Assert
         Assert.Equal(0, result.TotalCheckIns);
@@ -90,7 +90,7 @@ public class HRDashboardRepositoryTests
         var repository = new HRDashboardRepository(context);
 
         // Act
-        var result = await repository.GetDashboardAsync();
+        var result = await repository.GetDashboardAsync(30);
 
         // Assert
         Assert.Equal(2, result.TotalCheckIns);
@@ -184,7 +184,7 @@ public class HRDashboardRepositoryTests
         var repository = new HRDashboardRepository(context);
 
         // Act
-        var result = await repository.GetDashboardAsync();
+        var result = await repository.GetDashboardAsync(30);
 
         // Assert
         Assert.Equal(2, result.Departments.Count);
@@ -239,7 +239,7 @@ public class HRDashboardRepositoryTests
         var repository = new HRDashboardRepository(context);
 
         // Act
-        var result = await repository.GetDashboardAsync();
+        var result = await repository.GetDashboardAsync(30);
 
         // Assert
         Assert.Single(result.Departments);

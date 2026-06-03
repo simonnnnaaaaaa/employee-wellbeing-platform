@@ -44,6 +44,9 @@ type HRDashboardData = {
   averageStress: number;
   averageEnergy: number;
   highStressCount: number;
+  stressTrendPercentage: number;
+  energyTrendPercentage: number;
+  highStressTrendPercentage: number;
   departments: Department[];
 };
 
@@ -54,23 +57,77 @@ type HrAiSummary = {
   recommendations: string[];
 };
 
+const dateRangeOptions = [
+  { label: "7 days", value: 7 },
+  { label: "30 days", value: 30 },
+  { label: "90 days", value: 90 },
+  { label: "6 months", value: 180 },
+];
+
 function getStressLevel(stress: number) {
-  if (stress <= 3) return { label: "Low", color: "text-emerald-600", bgColor: "bg-emerald-100" };
-  if (stress <= 5) return { label: "Moderate", color: "text-amber-600", bgColor: "bg-amber-100" };
-  if (stress <= 7) return { label: "High", color: "text-orange-600", bgColor: "bg-orange-100" };
+  if (stress <= 3) {
+    return { label: "Low", color: "text-emerald-600", bgColor: "bg-emerald-100" };
+  }
+
+  if (stress <= 5) {
+    return { label: "Moderate", color: "text-amber-600", bgColor: "bg-amber-100" };
+  }
+
+  if (stress <= 7) {
+    return { label: "High", color: "text-orange-600", bgColor: "bg-orange-100" };
+  }
+
   return { label: "Critical", color: "text-rose-600", bgColor: "bg-rose-100" };
 }
 
 function getEnergyLevel(energy: number) {
-  if (energy <= 3) return { label: "Low", color: "text-rose-600", bgColor: "bg-rose-100" };
-  if (energy <= 5) return { label: "Moderate", color: "text-amber-600", bgColor: "bg-amber-100" };
-  if (energy <= 7) return { label: "Good", color: "text-emerald-600", bgColor: "bg-emerald-100" };
+  if (energy <= 3) {
+    return { label: "Low", color: "text-rose-600", bgColor: "bg-rose-100" };
+  }
+
+  if (energy <= 5) {
+    return { label: "Moderate", color: "text-amber-600", bgColor: "bg-amber-100" };
+  }
+
+  if (energy <= 7) {
+    return { label: "Good", color: "text-emerald-600", bgColor: "bg-emerald-100" };
+  }
+
   return { label: "Excellent", color: "text-teal-600", bgColor: "bg-teal-100" };
+}
+
+function getTrendInfo(value: number) {
+  return {
+    isPositive: value >= 0,
+    arrow: value >= 0 ? "↑" : "↓",
+    display: `${Math.abs(value).toFixed(1)}%`,
+  };
+}
+
+function getTrendClass(value: number, positiveIsBad: boolean) {
+  if (value === 0) {
+    return "text-slate-400";
+  }
+
+  if (positiveIsBad) {
+    return value > 0 ? "text-rose-600" : "text-emerald-600";
+  }
+
+  return value > 0 ? "text-emerald-600" : "text-rose-600";
+}
+
+function getPeriodLabel(days: number) {
+  if (days === 180) {
+    return "Last 6 months";
+  }
+
+  return `Last ${days} days`;
 }
 
 function HRDashboardPage() {
   const [data, setData] = useState<HRDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedDays, setSelectedDays] = useState(30);
 
   const [aiSummary, setAiSummary] = useState<HrAiSummary | null>(null);
   const [aiLoading, setAiLoading] = useState(true);
@@ -82,7 +139,8 @@ function HRDashboardPage() {
 
   async function loadData() {
     try {
-      const result = await getHRDashboard();
+      setLoading(true);
+      const result = await getHRDashboard(selectedDays);
       setData(result);
     } finally {
       setLoading(false);
@@ -109,6 +167,9 @@ function HRDashboardPage() {
 
   useEffect(() => {
     loadData();
+  }, [selectedDays]);
+
+  useEffect(() => {
     loadAiSummary();
     loadPredictiveAlerts();
   }, []);
@@ -126,6 +187,10 @@ function HRDashboardPage() {
       </div>
     );
   }
+
+  const stressTrend = getTrendInfo(data.stressTrendPercentage);
+  const energyTrend = getTrendInfo(data.energyTrendPercentage);
+  const highStressTrend = getTrendInfo(data.highStressTrendPercentage);
 
   const chartData = data.departments.map((dep) => ({
     name: dep.department,
@@ -165,6 +230,32 @@ function HRDashboardPage() {
           </p>
         </section>
 
+        <section className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/70 bg-white/90 p-4 shadow-sm backdrop-blur">
+          <div>
+            <p className="text-sm font-semibold text-slate-900">Time period</p>
+            <p className="text-xs text-slate-500">
+              Filter HR analytics by recent check-ins
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {dateRangeOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setSelectedDays(option.value)}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                  selectedDays === option.value
+                    ? "bg-green-600 text-white shadow-sm"
+                    : "bg-green-50 text-slate-600 hover:bg-green-100"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
         <section className="mb-8">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900">
             <Activity className="h-5 w-5 text-green-600" />
@@ -175,7 +266,7 @@ function HRDashboardPage() {
             <OverviewCard
               label="Total Check-ins"
               value={data.totalCheckIns}
-              sublabel="All time"
+              sublabel={getPeriodLabel(selectedDays)}
               icon={<Users className="h-6 w-6 text-green-600" />}
               iconBg="bg-green-100"
             />
@@ -185,6 +276,8 @@ function HRDashboardPage() {
               value={data.averageStress.toFixed(1)}
               badge={getStressLevel(data.averageStress).label}
               badgeClass={`${getStressLevel(data.averageStress).bgColor} ${getStressLevel(data.averageStress).color}`}
+              trend={`${stressTrend.arrow} ${stressTrend.display} vs previous period`}
+              trendClass={getTrendClass(data.stressTrendPercentage, true)}
               icon={<TrendingDown className="h-6 w-6 text-rose-500" />}
               iconBg="bg-rose-100"
             />
@@ -194,6 +287,8 @@ function HRDashboardPage() {
               value={data.averageEnergy.toFixed(1)}
               badge={getEnergyLevel(data.averageEnergy).label}
               badgeClass={`${getEnergyLevel(data.averageEnergy).bgColor} ${getEnergyLevel(data.averageEnergy).color}`}
+              trend={`${energyTrend.arrow} ${energyTrend.display} vs previous period`}
+              trendClass={getTrendClass(data.energyTrendPercentage, false)}
               icon={<Zap className="h-6 w-6 text-amber-500" />}
               iconBg="bg-amber-100"
             />
@@ -201,7 +296,13 @@ function HRDashboardPage() {
             <OverviewCard
               label="High Stress Alerts"
               value={data.highStressCount}
-              sublabel={`${data.totalCheckIns > 0 ? ((data.highStressCount / data.totalCheckIns) * 100).toFixed(1) : "0.0"}% of check-ins`}
+              sublabel={`${
+                data.totalCheckIns > 0
+                  ? ((data.highStressCount / data.totalCheckIns) * 100).toFixed(1)
+                  : "0.0"
+              }% of check-ins`}
+              trend={`${highStressTrend.arrow} ${highStressTrend.display} vs previous period`}
+              trendClass={getTrendClass(data.highStressTrendPercentage, true)}
               icon={<AlertTriangle className="h-6 w-6 text-orange-500" />}
               iconBg="bg-orange-100"
             />
@@ -268,9 +369,7 @@ function HRDashboardPage() {
             </p>
           )}
 
-          <br />
-
-          <section className="mb-8">
+          <section className="mt-8">
             <HrPredictiveAlertsCard
               alerts={predictiveAlerts}
               loading={predictiveAlertsLoading}
@@ -287,7 +386,10 @@ function HRDashboardPage() {
 
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#6b7280" }} />
                   <YAxis domain={[0, 10]} tick={{ fontSize: 12, fill: "#6b7280" }} />
@@ -362,7 +464,9 @@ function HRDashboardPage() {
                       <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-100">
                         <Building2 className="h-4 w-4 text-green-600" />
                       </div>
-                      <h3 className="font-semibold text-slate-900">{dep.department}</h3>
+                      <h3 className="font-semibold text-slate-900">
+                        {dep.department}
+                      </h3>
                     </div>
 
                     <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs text-slate-600">
@@ -422,6 +526,8 @@ function OverviewCard({
   sublabel,
   badge,
   badgeClass,
+  trend,
+  trendClass,
   icon,
   iconBg,
 }: {
@@ -430,12 +536,14 @@ function OverviewCard({
   sublabel?: string;
   badge?: string;
   badgeClass?: string;
+  trend?: string;
+  trendClass?: string;
   icon: React.ReactNode;
   iconBg: string;
 }) {
   return (
     <div className="rounded-3xl border border-white/70 bg-white/90 p-6 shadow-sm backdrop-blur">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <p className="mb-1 text-sm text-slate-500">{label}</p>
           <p className="text-3xl font-bold text-slate-900">{value}</p>
@@ -443,9 +551,17 @@ function OverviewCard({
           {sublabel && <p className="mt-1 text-xs text-slate-400">{sublabel}</p>}
 
           {badge && (
-            <span className={`mt-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${badgeClass}`}>
+            <span
+              className={`mt-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${badgeClass}`}
+            >
               {badge}
             </span>
+          )}
+
+          {trend && (
+            <p className={`mt-2 text-xs font-medium ${trendClass}`}>
+              {trend}
+            </p>
           )}
         </div>
 

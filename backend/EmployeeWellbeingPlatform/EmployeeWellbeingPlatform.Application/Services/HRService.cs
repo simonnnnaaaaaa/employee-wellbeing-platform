@@ -12,8 +12,8 @@ public class HRService
         _hrDashboardRepository = hrDashboardRepository;
     }
 
-    public async Task<HRDashboardResponseDto> GetDashboardAsync()
+    public async Task<HRDashboardResponseDto> GetDashboardAsync(int days)
     {
-        return await _hrDashboardRepository.GetDashboardAsync();
+        return await _hrDashboardRepository.GetDashboardAsync(days);
     }
 }

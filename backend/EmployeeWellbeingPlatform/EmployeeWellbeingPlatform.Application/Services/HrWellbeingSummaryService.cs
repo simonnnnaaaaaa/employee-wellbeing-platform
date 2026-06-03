@@ -17,7 +17,7 @@ public class HrWellbeingSummaryService
 
     public async Task<HrWellbeingSummaryResponseDto> GetSummaryAsync()
     {
-        var dashboard = await _hrDashboardRepository.GetDashboardAsync();
+        var dashboard = await _hrDashboardRepository.GetDashboardAsync(30);
 
         if (dashboard.TotalCheckIns == 0 || dashboard.Departments.Count == 0)
         {

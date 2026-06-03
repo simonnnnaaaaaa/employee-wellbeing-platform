@@ -17,9 +17,9 @@ public class HRController : ControllerBase
     }
 
     [HttpGet("dashboard")]
-    public async Task<IActionResult> GetDashboard()
+    public async Task<IActionResult> GetDashboard([FromQuery] int days = 30)
     {
-        var result = await _hrService.GetDashboardAsync();
+        var result = await _hrService.GetDashboardAsync(days);
 
         return Ok(result);
     }

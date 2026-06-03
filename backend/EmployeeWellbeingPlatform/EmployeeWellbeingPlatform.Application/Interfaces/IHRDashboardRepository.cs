@@ -4,5 +4,5 @@ namespace EmployeeWellbeingPlatform.Application.Interfaces;
 
 public interface IHRDashboardRepository
 {
-    Task<HRDashboardResponseDto> GetDashboardAsync();
+    Task<HRDashboardResponseDto> GetDashboardAsync(int days);
 }
