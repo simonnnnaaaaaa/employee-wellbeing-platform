@@ -10,5 +10,11 @@ public class HRDashboardResponseDto
 
     public int HighStressCount { get; set; }
 
+    public double StressTrendPercentage { get; set; }
+
+    public double EnergyTrendPercentage { get; set; }
+
+    public double HighStressTrendPercentage { get; set; }
+
     public List<DepartmentWellbeingSummaryDto> Departments { get; set; } = new();
 }

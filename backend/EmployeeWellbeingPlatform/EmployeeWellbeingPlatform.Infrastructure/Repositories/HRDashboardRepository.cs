@@ -14,23 +14,71 @@ public class HRDashboardRepository : IHRDashboardRepository
         _context = context;
     }
 
-    public async Task<HRDashboardResponseDto> GetDashboardAsync()
+    public async Task<HRDashboardResponseDto> GetDashboardAsync(int days)
     {
-        var checkIns = await _context.CheckIns
+        if (days <= 0)
+        {
+            days = 30;
+        }
+
+        var currentPeriodStart = DateTime.UtcNow.AddDays(-days);
+        var previousPeriodStart = DateTime.UtcNow.AddDays(-(days * 2));
+        var previousPeriodEnd = currentPeriodStart;
+
+        var currentCheckIns = await _context.CheckIns
             .Include(c => c.User)
             .ThenInclude(u => u.Department)
+            .Where(c => c.CreatedAt >= currentPeriodStart)
             .ToListAsync();
 
-        var totalCheckIns = checkIns.Count;
+        var previousCheckIns = await _context.CheckIns
+            .Where(c =>
+                c.CreatedAt >= previousPeriodStart &&
+                c.CreatedAt < previousPeriodEnd)
+            .ToListAsync();
+
+        var totalCheckIns = currentCheckIns.Count;
+
+        var averageStress = totalCheckIns > 0
+            ? currentCheckIns.Average(c => c.StressLevel)
+            : 0;
+
+        var averageEnergy = totalCheckIns > 0
+            ? currentCheckIns.Average(c => c.EnergyLevel)
+            : 0;
+
+        var highStressCount = currentCheckIns.Count(c => c.StressLevel >= 8);
+
+        var previousAverageStress = previousCheckIns.Count > 0
+            ? previousCheckIns.Average(c => c.StressLevel)
+            : 0;
+
+        var previousAverageEnergy = previousCheckIns.Count > 0
+            ? previousCheckIns.Average(c => c.EnergyLevel)
+            : 0;
+
+        var previousHighStressCount = previousCheckIns.Count(c => c.StressLevel >= 8);
 
         return new HRDashboardResponseDto
         {
             TotalCheckIns = totalCheckIns,
-            AverageStress = totalCheckIns > 0 ? checkIns.Average(c => c.StressLevel) : 0,
-            AverageEnergy = totalCheckIns > 0 ? checkIns.Average(c => c.EnergyLevel) : 0,
-            HighStressCount = checkIns.Count(c => c.StressLevel >= 8),
+            AverageStress = averageStress,
+            AverageEnergy = averageEnergy,
+            HighStressCount = highStressCount,
 
-            Departments = checkIns
+            StressTrendPercentage = CalculateTrendPercentage(
+                averageStress,
+                previousAverageStress),
+
+            EnergyTrendPercentage = CalculateTrendPercentage(
+                averageEnergy,
+                previousAverageEnergy),
+
+            HighStressTrendPercentage = CalculateTrendPercentage(
+                highStressCount,
+                previousHighStressCount),
+
+            Departments = currentCheckIns
                 .GroupBy(c => c.User.Department != null ? c.User.Department.Name : "Unassigned")
                 .Select(group => new DepartmentWellbeingSummaryDto
                 {
@@ -42,5 +90,17 @@ public class HRDashboardRepository : IHRDashboardRepository
                 })
                 .ToList()
         };
+    }
+
+    private static double CalculateTrendPercentage(
+        double currentValue,
+        double previousValue)
+    {
+        if (previousValue == 0)
+        {
+            return currentValue > 0 ? 100 : 0;
+        }
+
+        return ((currentValue - previousValue) / previousValue) * 100;
     }
 }
