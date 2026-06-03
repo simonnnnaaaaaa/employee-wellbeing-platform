@@ -78,6 +78,20 @@ public class HRDashboardRepository : IHRDashboardRepository
                 highStressCount,
                 previousHighStressCount),
 
+            MoodDistribution = currentCheckIns
+                .Where(c => !string.IsNullOrWhiteSpace(c.Mood))
+                .GroupBy(c => c.Mood)
+                .Select(group => new MoodDistributionDto
+                {
+                     Mood = group.Key,
+                     Count = group.Count(),
+                     Percentage = totalCheckIns > 0
+                        ? Math.Round((double)group.Count() / totalCheckIns * 100, 1)
+                        : 0
+                })
+                .OrderByDescending(item => item.Count)
+                .ToList(),
+
             Departments = currentCheckIns
                 .GroupBy(c => c.User.Department != null ? c.User.Department.Name : "Unassigned")
                 .Select(group => new DepartmentWellbeingSummaryDto
