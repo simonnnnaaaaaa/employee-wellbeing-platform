@@ -18,6 +18,10 @@ public class AppDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<User>()
+            .HasIndex(user => user.Email)
+            .IsUnique();
+
+        modelBuilder.Entity<User>()
             .HasOne(user => user.Department)
             .WithMany(department => department.Users)
             .HasForeignKey(user => user.DepartmentId)
