@@ -15,6 +15,20 @@ public class CheckInService
 
     public async Task CreateAsync(Guid userId, CreateCheckInRequestDto request)
     {
+        var existingTodayCheckIn = await _checkInRepository.GetTodayByUserIdAsync(userId);
+
+        if (existingTodayCheckIn != null)
+        {
+            existingTodayCheckIn.StressLevel = request.StressLevel;
+            existingTodayCheckIn.EnergyLevel = request.EnergyLevel;
+            existingTodayCheckIn.Mood = request.Mood;
+            existingTodayCheckIn.Notes = request.Notes;
+
+            await _checkInRepository.UpdateAsync(existingTodayCheckIn);
+
+            return;
+        }
+
         var checkIn = new CheckIn
         {
             Id = Guid.NewGuid(),

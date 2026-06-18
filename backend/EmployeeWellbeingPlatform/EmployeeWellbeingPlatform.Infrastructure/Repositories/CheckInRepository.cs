@@ -35,4 +35,22 @@ public class CheckInRepository : ICheckInRepository
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task<CheckIn?> GetTodayByUserIdAsync(Guid userId)
+    {
+        var today = DateTime.UtcNow.Date;
+        var tomorrow = today.AddDays(1);
+
+        return await _context.CheckIns
+            .FirstOrDefaultAsync(checkIn =>
+                checkIn.UserId == userId &&
+                checkIn.CreatedAt >= today &&
+                checkIn.CreatedAt < tomorrow);
+    }
+
+    public async Task UpdateAsync(CheckIn checkIn)
+    {
+        _context.CheckIns.Update(checkIn);
+        await _context.SaveChangesAsync();
+    }
 }

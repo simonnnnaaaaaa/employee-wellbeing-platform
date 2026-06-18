@@ -19,17 +19,17 @@ import {
     ChevronRight,
     ClipboardCheck,
     Frown,
-    Leaf,
     Meh,
     Smile,
     AlertCircle,
     TrendingUp,
     Zap,
+    Mic,
+    MicOff,
 } from "lucide-react";
 import PredictiveAlertsCard from "../components/PredictiveAlertsCard";
 import { getPredictiveAlerts } from "../services/predictiveAlertService";
 import type { PredictiveAlert } from "../services/predictiveAlertService";
-
 
 type CheckIn = {
     id: string;
@@ -96,10 +96,70 @@ function DashboardPage() {
     const [predictiveAlerts, setPredictiveAlerts] = useState<PredictiveAlert[]>([]);
     const [predictiveAlertsLoading, setPredictiveAlertsLoading] = useState(true);
 
+    const [todayCheckInExists, setTodayCheckInExists] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+
+    function isToday(date: string) {
+        const checkInDate = new Date(date);
+        const today = new Date();
+
+        return (
+            checkInDate.getFullYear() === today.getFullYear() &&
+            checkInDate.getMonth() === today.getMonth() &&
+            checkInDate.getDate() === today.getDate()
+        );
+    }
+
+    function resetCheckInForm() {
+        setStressLevel(5);
+        setEnergyLevel(5);
+        setMood("Neutral");
+        setNotes("");
+    }
+
+    function startSpeechRecognition() {
+        const SpeechRecognition =
+            (window as any).SpeechRecognition ||
+            (window as any).webkitSpeechRecognition;
+
+        if (!SpeechRecognition) {
+            alert("Speech recognition is not supported in this browser.");
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+
+        recognition.lang = "en-US";
+        recognition.interimResults = false;
+        recognition.continuous = false;
+
+        setIsRecording(true);
+
+        recognition.onresult = (event: any) => {
+            const transcript = event.results[0][0].transcript;
+
+            setNotes((current) =>
+                current ? `${current} ${transcript}` : transcript
+            );
+        };
+
+        recognition.onend = () => {
+            setIsRecording(false);
+        };
+
+        recognition.onerror = () => {
+            setIsRecording(false);
+        };
+
+        recognition.start();
+    }
+
     async function handleSubmit(event: React.FormEvent) {
         event.preventDefault();
         setIsSubmitting(true);
         setMessage("");
+
+        const wasUpdate = todayCheckInExists;
 
         try {
             await createCheckIn({
@@ -112,11 +172,11 @@ function DashboardPage() {
             await loadCheckIns();
             await loadInsight();
 
-            setMessage("Check-in saved successfully.");
-            setStressLevel(5);
-            setEnergyLevel(5);
-            setMood("Neutral");
-            setNotes("");
+            setMessage(
+                wasUpdate
+                    ? "Today's check-in updated successfully."
+                    : "Check-in saved successfully."
+            );
 
             setTimeout(() => setMessage(""), 3000);
         } catch {
@@ -129,6 +189,21 @@ function DashboardPage() {
     async function loadCheckIns() {
         const data = await getMyCheckIns();
         setCheckIns(data);
+
+        const todayCheckIn = data.find((checkIn: CheckIn) =>
+            isToday(checkIn.createdAt)
+        );
+
+        if (todayCheckIn) {
+            setTodayCheckInExists(true);
+            setStressLevel(todayCheckIn.stressLevel >= 1 ? todayCheckIn.stressLevel : 5);
+            setEnergyLevel(todayCheckIn.energyLevel >= 1 ? todayCheckIn.energyLevel : 5);
+            setMood(todayCheckIn.mood || "Neutral");
+            setNotes(todayCheckIn.notes ?? "");
+        } else {
+            setTodayCheckInExists(false);
+            resetCheckInForm();
+        }
     }
 
     async function loadInsight() {
@@ -221,7 +296,6 @@ function DashboardPage() {
                         </div>
                     </div>
 
-
                     <div className="rounded-3xl border border-white/70 bg-white/90 p-6 shadow-sm backdrop-blur">
                         <div className="flex items-center gap-4">
                             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100">
@@ -266,11 +340,7 @@ function DashboardPage() {
                                 Personalized insight based on your recent check-ins
                             </p>
                         </div>
-
-
-
                     </div>
-
 
                     {insightLoading ? (
                         <p className="text-sm text-slate-500">Generating your insight...</p>
@@ -312,7 +382,6 @@ function DashboardPage() {
                             No insight available yet.
                         </p>
                     )}
-
                 </section>
 
                 <section className="mb-8">
@@ -326,8 +395,14 @@ function DashboardPage() {
                     <div className="rounded-3xl border border-white/70 bg-white/90 p-6 shadow-sm backdrop-blur lg:col-span-1">
                         <h2 className="mb-6 flex items-center gap-2 text-lg font-semibold text-slate-900">
                             <Calendar className="h-5 w-5 text-green-600" />
-                            Daily Check-in
+                            {todayCheckInExists ? "Update Today's Check-in" : "Daily Check-in"}
                         </h2>
+
+                        {todayCheckInExists && (
+                            <p className="mb-4 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
+                                You already completed today's check-in. Any changes will update it.
+                            </p>
+                        )}
 
                         {message && (
                             <div className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
@@ -405,10 +480,32 @@ function DashboardPage() {
                             </div>
 
                             <div className="space-y-3">
-                                <label className="text-sm font-medium text-slate-700">
-                                    Notes{" "}
-                                    <span className="font-normal text-slate-400">(optional)</span>
-                                </label>
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-medium text-slate-700">
+                                        Notes{" "}
+                                        <span className="font-normal text-slate-400">(optional)</span>
+                                    </label>
+
+                                    <button
+                                        type="button"
+                                        onClick={startSpeechRecognition}
+                                        disabled={isRecording}
+                                        className="flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-70"
+                                    >
+                                        {isRecording ? (
+                                            <>
+                                                <MicOff className="h-4 w-4" />
+                                                Listening...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Mic className="h-4 w-4" />
+                                                Dictate
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
                                 <textarea
                                     value={notes}
                                     onChange={(event) => setNotes(event.target.value)}
@@ -422,7 +519,11 @@ function DashboardPage() {
                                 disabled={isSubmitting}
                                 className="flex h-11 w-full items-center justify-center rounded-xl bg-[#4caf58] font-medium text-white shadow-lg shadow-green-500/20 transition hover:bg-[#43a04f] disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                {isSubmitting ? "Saving..." : "Save Check-in"}
+                                {isSubmitting
+                                    ? "Saving..."
+                                    : todayCheckInExists
+                                        ? "Update Check-in"
+                                        : "Save Check-in"}
                             </button>
                         </form>
                     </div>
