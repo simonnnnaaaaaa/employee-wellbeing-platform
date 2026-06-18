@@ -11,11 +11,13 @@ export interface HrPredictiveAlert {
   affectedEmployeesCount: number;
 }
 
-export const getHrPredictiveAlerts = async (): Promise<HrPredictiveAlert[]> => {
+export const getHrPredictiveAlerts = async (
+  days: number
+): Promise<HrPredictiveAlert[]> => {
   const token = localStorage.getItem("token");
 
   const response = await axios.get<HrPredictiveAlert[]>(
-    `${API_URL}/hr/predictive-alerts`,
+    `${API_URL}/hr/predictive-alerts?days=${days}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,

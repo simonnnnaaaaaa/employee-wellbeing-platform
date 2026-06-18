@@ -223,15 +223,10 @@ function HRDashboardPage() {
   const [data, setData] = useState<HRDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedDays, setSelectedDays] = useState(30);
-
   const [aiSummary, setAiSummary] = useState<HrAiSummary | null>(null);
   const [aiLoading, setAiLoading] = useState(true);
-
-  const [predictiveAlerts, setPredictiveAlerts] =
-    useState<HrPredictiveAlert[]>([]);
-  const [predictiveAlertsLoading, setPredictiveAlertsLoading] =
-    useState(true);
-
+  const [predictiveAlerts, setPredictiveAlerts] = useState<HrPredictiveAlert[]>([]);
+  const [predictiveAlertsLoading, setPredictiveAlertsLoading] = useState(true);
   const [showMoodInfo, setShowMoodInfo] = useState(false);
 
   async function loadData() {
@@ -246,16 +241,18 @@ function HRDashboardPage() {
 
   async function loadAiSummary() {
     try {
-      const result = await getHrWellbeingSummary();
+      setAiLoading(true);
+
+      const result = await getHrWellbeingSummary(selectedDays);
+
       setAiSummary(result);
     } finally {
       setAiLoading(false);
     }
   }
-
   async function loadPredictiveAlerts() {
     try {
-      const data = await getHrPredictiveAlerts();
+      const data = await getHrPredictiveAlerts(selectedDays);
       setPredictiveAlerts(data);
     } finally {
       setPredictiveAlertsLoading(false);
@@ -264,12 +261,9 @@ function HRDashboardPage() {
 
   useEffect(() => {
     loadData();
-  }, [selectedDays]);
-
-  useEffect(() => {
     loadAiSummary();
     loadPredictiveAlerts();
-  }, []);
+  }, [selectedDays]);
 
   if (loading || !data) {
     return (
@@ -317,7 +311,7 @@ function HRDashboardPage() {
 
       <Header />
 
-      <main className="relative mx-auto max-w-7xl px-4 py-8">
+      <main className="relative mx-auto max-w-7xl px-4 pt-28 pb-8">
         <section className="mb-8">
           <div className="mb-2 flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-100">
@@ -419,7 +413,7 @@ function HRDashboardPage() {
               </h2>
 
               <p className="text-sm text-slate-500">
-                AI-generated wellbeing analysis for HR teams
+                AI-generated wellbeing analysis for the selected period
               </p>
             </div>
           </div>
@@ -433,6 +427,12 @@ function HRDashboardPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <span className="rounded-full bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-700">
                   {aiSummary.riskLevel} organizational risk
+                </span>
+
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-600">
+                  {selectedDays === 180
+                    ? "Last 6 months"
+                    : `Last ${selectedDays} days`}
                 </span>
 
                 <span className="rounded-full bg-rose-100 px-3 py-1 text-sm font-semibold text-rose-700">
@@ -467,14 +467,19 @@ function HRDashboardPage() {
             </p>
           )}
 
+
+        </section>
+        <div>
           <section className="mt-8">
             <HrPredictiveAlertsCard
               alerts={predictiveAlerts}
               loading={predictiveAlertsLoading}
             />
           </section>
-        </section>
+        </div>
 
+        <br></br>
+        
         <section className="mb-8 rounded-3xl border border-white/70 bg-white/90 p-6 shadow-sm backdrop-blur">
           <div className="mb-6 flex items-start justify-between gap-4">
             <div>

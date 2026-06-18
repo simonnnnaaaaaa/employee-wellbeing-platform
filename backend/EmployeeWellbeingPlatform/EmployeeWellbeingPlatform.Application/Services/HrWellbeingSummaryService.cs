@@ -15,9 +15,9 @@ public class HrWellbeingSummaryService
         _aiTextGenerator = aiTextGenerator;
     }
 
-    public async Task<HrWellbeingSummaryResponseDto> GetSummaryAsync()
+    public async Task<HrWellbeingSummaryResponseDto> GetSummaryAsync(int days)
     {
-        var dashboard = await _hrDashboardRepository.GetDashboardAsync(30);
+        var dashboard = await _hrDashboardRepository.GetDashboardAsync(days);
 
         if (dashboard.TotalCheckIns == 0 || dashboard.Departments.Count == 0)
         {

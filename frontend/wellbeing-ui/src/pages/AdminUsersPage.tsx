@@ -149,7 +149,7 @@ function AdminUsersPage() {
 
       <Header />
 
-      <main className="relative mx-auto max-w-7xl px-4 py-8">
+      <main className="relative mx-auto max-w-7xl px-4 pt-28 pb-8">
         <section className="mb-8 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-100">
             <UserCog className="h-6 w-6 text-green-600" />
