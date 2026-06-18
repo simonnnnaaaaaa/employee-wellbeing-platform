@@ -113,12 +113,13 @@ public class PredictiveAlertService : IPredictiveAlertService
     }
 
     public async Task<List<HrPredictiveAlertDto>> GetHrPredictiveAlertsAsync(
+    int days,
     CancellationToken cancellationToken = default)
     {
         var checkIns = await _checkInRepository.GetAllAsync();
 
         var recentCheckIns = checkIns
-            .Where(c => c.CreatedAt >= DateTime.UtcNow.AddDays(-60))
+            .Where(c => c.CreatedAt >= DateTime.UtcNow.AddDays(-days))
             .ToList();
 
         var alerts = new List<HrPredictiveAlertDto>();

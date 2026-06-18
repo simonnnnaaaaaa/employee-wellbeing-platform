@@ -17,9 +17,12 @@ public class HrPredictiveAlertsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetHrPredictiveAlerts(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetHrPredictiveAlerts(
+    [FromQuery] int days = 30,
+    CancellationToken cancellationToken = default)
     {
-        var alerts = await _predictiveAlertService.GetHrPredictiveAlertsAsync(cancellationToken);
+        var alerts = await _predictiveAlertService
+            .GetHrPredictiveAlertsAsync(days, cancellationToken);
 
         return Ok(alerts);
     }

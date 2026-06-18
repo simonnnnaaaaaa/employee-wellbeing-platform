@@ -21,10 +21,16 @@ export async function getMyWellbeingInsight() {
   return response.data;
 }
 
-export async function getHrWellbeingSummary() {
+export async function getHrWellbeingSummary(days: number) {
+  const token = localStorage.getItem("token");
+
   const response = await axios.get(
-    `${API_URL}/hr-wellbeing-summary`,
-    getAuthHeaders()
+    `https://localhost:7258/api/ai/hr-wellbeing-summary?days=${days}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
   );
 
   return response.data;

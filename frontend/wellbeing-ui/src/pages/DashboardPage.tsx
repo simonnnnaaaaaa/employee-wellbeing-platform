@@ -197,7 +197,7 @@ function DashboardPage() {
 
             <Header />
 
-            <main className="relative mx-auto max-w-7xl px-4 py-8">
+            <main className="relative mx-auto max-w-7xl px-4 pt-28 pb-8">
                 <section className="mb-8">
                     <h1 className="text-3xl font-bold text-slate-900">Good morning!</h1>
                     <p className="mt-2 text-sm text-slate-500">
@@ -271,7 +271,7 @@ function DashboardPage() {
 
                     </div>
 
-                    
+
                     {insightLoading ? (
                         <p className="text-sm text-slate-500">Generating your insight...</p>
                     ) : insight ? (
@@ -312,15 +312,15 @@ function DashboardPage() {
                             No insight available yet.
                         </p>
                     )}
-                    <br></br>
-                    <section className="mb-8">
-                        <PredictiveAlertsCard
-                            alerts={predictiveAlerts}
-                            loading={predictiveAlertsLoading}
-                        />
-                    </section>
+
                 </section>
 
+                <section className="mb-8">
+                    <PredictiveAlertsCard
+                        alerts={predictiveAlerts}
+                        loading={predictiveAlertsLoading}
+                    />
+                </section>
 
                 <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     <div className="rounded-3xl border border-white/70 bg-white/90 p-6 shadow-sm backdrop-blur lg:col-span-1">

@@ -41,9 +41,9 @@ public class AiController : ControllerBase
 
     [HttpGet("hr-wellbeing-summary")]
     [Authorize(Roles = "HR,Admin")]
-    public async Task<IActionResult> GetHrWellbeingSummary()
+    public async Task<IActionResult> GetHrWellbeingSummary([FromQuery] int days = 30)
     {
-        var summary = await _hrWellbeingSummaryService.GetSummaryAsync();
+        var summary = await _hrWellbeingSummaryService.GetSummaryAsync(days);
 
         return Ok(summary);
     }
