@@ -5,6 +5,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import HRDashboardPage from "./pages/HRDashboardPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
     return (
@@ -33,6 +34,14 @@ function App() {
                     element={
                         <ProtectedRoute requiredRole="Admin">
                             <AdminUsersPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/profile"
+                    element={
+                        <ProtectedRoute>
+                            <ProfilePage />
                         </ProtectedRoute>
                     }
                 />
