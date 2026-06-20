@@ -94,13 +94,32 @@ public class HRDashboardRepository : IHRDashboardRepository
 
             Departments = currentCheckIns
                 .GroupBy(c => c.User.Department != null ? c.User.Department.Name : "Unassigned")
-                .Select(group => new DepartmentWellbeingSummaryDto
+                .Select(group =>
                 {
-                    Department = group.Key,
-                    TotalCheckIns = group.Count(),
-                    AverageStress = group.Average(c => c.StressLevel),
-                    AverageEnergy = group.Average(c => c.EnergyLevel),
-                    HighStressCount = group.Count(c => c.StressLevel >= 8)
+                    var totalDepartmentCheckIns = group.Count();
+                    var averageStress = group.Average(c => c.StressLevel);
+                    var averageEnergy = group.Average(c => c.EnergyLevel);
+                    var highStressCount = group.Count(c => c.StressLevel >= 8);
+
+                    var highStressPercentage = totalDepartmentCheckIns > 0
+                        ? (double)highStressCount / totalDepartmentCheckIns * 100
+                        : 0;
+
+                    var riskScore = CalculateDepartmentRiskScore(
+                        averageStress,
+                        averageEnergy,
+                        highStressPercentage);
+
+                    return new DepartmentWellbeingSummaryDto
+                    {
+                        Department = group.Key,
+                        TotalCheckIns = totalDepartmentCheckIns,
+                        AverageStress = averageStress,
+                        AverageEnergy = averageEnergy,
+                        HighStressCount = highStressCount,
+                        RiskScore = riskScore,
+                        RiskLevel = GetDepartmentRiskLevel(riskScore)
+                    };
                 })
                 .ToList()
         };
@@ -116,5 +135,38 @@ public class HRDashboardRepository : IHRDashboardRepository
         }
 
         return ((currentValue - previousValue) / previousValue) * 100;
+    }
+
+    private static double CalculateDepartmentRiskScore(
+    double averageStress,
+    double averageEnergy,
+    double highStressPercentage)
+    {
+        var score =
+            averageStress * 7
+            + (10 - averageEnergy) * 5
+            + highStressPercentage * 0.5;
+
+        return Math.Round(Math.Min(score, 100), 1);
+    }
+
+    private static string GetDepartmentRiskLevel(double riskScore)
+    {
+        if (riskScore < 30)
+        {
+            return "Low";
+        }
+
+        if (riskScore < 60)
+        {
+            return "Moderate";
+        }
+
+        if (riskScore < 80)
+        {
+            return "High";
+        }
+
+        return "Critical";
     }
 }

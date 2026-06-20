@@ -40,6 +40,8 @@ type Department = {
   averageStress: number;
   averageEnergy: number;
   highStressCount: number;
+  riskScore: number;
+  riskLevel: string;
 };
 
 type HRDashboardData = {
@@ -104,6 +106,22 @@ function getEnergyLevel(energy: number) {
   }
 
   return { label: "Excellent", color: "text-teal-600", bgColor: "bg-teal-100" };
+}
+
+
+function getRiskLevelClasses(riskLevel: string) {
+  switch (riskLevel) {
+    case "Low":
+      return "bg-emerald-100 text-emerald-600";
+    case "Moderate":
+      return "bg-amber-100 text-amber-600";
+    case "High":
+      return "bg-orange-100 text-orange-600";
+    case "Critical":
+      return "bg-rose-100 text-rose-600";
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
 }
 
 function getMoodColor(mood: string) {
@@ -283,6 +301,11 @@ function HRDashboardPage() {
   const energyTrend = getTrendInfo(data.energyTrendPercentage);
   const highStressTrend = getTrendInfo(data.highStressTrendPercentage);
 
+  const highestRiskDepartment =
+    data.departments.length > 0
+      ? [...data.departments].sort((a, b) => b.riskScore - a.riskScore)[0]
+      : null;
+
   const moodHealthScore = calculateMoodHealthScore(data.moodDistribution);
   const moodHealthLevel = getMoodHealthLevel(moodHealthScore);
 
@@ -355,7 +378,7 @@ function HRDashboardPage() {
             Company Overview
           </h2>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <OverviewCard
               label="Total Check-ins"
               value={data.totalCheckIns}
@@ -397,6 +420,24 @@ function HRDashboardPage() {
               trendClass={getTrendClass(data.highStressTrendPercentage, true)}
               icon={<AlertTriangle className="h-6 w-6 text-orange-500" />}
               iconBg="bg-orange-100"
+            />
+
+            <OverviewCard
+              label="Highest Risk Department"
+              value={highestRiskDepartment ? highestRiskDepartment.department : "N/A"}
+              sublabel={
+                highestRiskDepartment
+                  ? `Risk score ${highestRiskDepartment.riskScore.toFixed(1)}`
+                  : "No data"
+              }
+              badge={highestRiskDepartment?.riskLevel}
+              badgeClass={
+                highestRiskDepartment
+                  ? getRiskLevelClasses(highestRiskDepartment.riskLevel)
+                  : "bg-slate-100 text-slate-600"
+              }
+              icon={<Building2 className="h-6 w-6 text-rose-500" />}
+              iconBg="bg-rose-100"
             />
           </div>
         </section>
@@ -479,7 +520,7 @@ function HRDashboardPage() {
         </div>
 
         <br></br>
-        
+
         <section className="mb-8 rounded-3xl border border-white/70 bg-white/90 p-6 shadow-sm backdrop-blur">
           <div className="mb-6 flex items-start justify-between gap-4">
             <div>
@@ -691,6 +732,27 @@ function HRDashboardPage() {
                     <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs text-slate-600">
                       {dep.totalCheckIns} check-ins
                     </span>
+                  </div>
+
+                  <div className="mb-4 rounded-2xl bg-slate-50 px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-600">
+                        Risk Score
+                      </span>
+
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getRiskLevelClasses(
+                          dep.riskLevel
+                        )}`}
+                      >
+                        {dep.riskLevel}
+                      </span>
+                    </div>
+
+                    <p className="mt-2 text-2xl font-bold text-slate-900">
+                      {dep.riskScore.toFixed(1)}
+                      <span className="text-sm font-normal text-slate-400">/100</span>
+                    </p>
                   </div>
 
                   <div className="space-y-3">
