@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import Header from "../components/Header";
-import { getHRDashboard } from "../services/hrService";
-import { Info } from "lucide-react";
+import { exportHRReportPdf, getHRDashboard } from "../services/hrService"; import { Info } from "lucide-react";
 import {
   Activity,
   AlertTriangle,
@@ -246,7 +245,10 @@ function HRDashboardPage() {
   const [predictiveAlerts, setPredictiveAlerts] = useState<HrPredictiveAlert[]>([]);
   const [predictiveAlertsLoading, setPredictiveAlertsLoading] = useState(true);
   const [showMoodInfo, setShowMoodInfo] = useState(false);
-
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
   async function loadData() {
     try {
       setLoading(true);
@@ -274,6 +276,30 @@ function HRDashboardPage() {
       setPredictiveAlerts(data);
     } finally {
       setPredictiveAlertsLoading(false);
+    }
+  }
+
+  async function handleExportPdf() {
+    setExportError("");
+
+    if (!exportStartDate || !exportEndDate) {
+      setExportError("Please select both start and end date.");
+      return;
+    }
+
+    if (new Date(exportStartDate) > new Date(exportEndDate)) {
+      setExportError("Start date cannot be after end date.");
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      await exportHRReportPdf(exportStartDate, exportEndDate);
+    } catch (error) {
+      console.error("Failed to export HR report:", error);
+      setExportError("Could not export PDF report.");
+    } finally {
+      setIsExporting(false);
     }
   }
 
@@ -371,7 +397,59 @@ function HRDashboardPage() {
             ))}
           </div>
         </section>
+        <section className="mb-8 rounded-3xl border border-white/70 bg-white/90 p-5 shadow-sm backdrop-blur">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">
+                Export HR report
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Download a PDF report for a custom period.
+              </p>
+            </div>
 
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-500">
+                  Start date
+                </label>
+                <input
+                  type="date"
+                  value={exportStartDate}
+                  onChange={(event) => setExportStartDate(event.target.value)}
+                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-green-300 focus:ring-4 focus:ring-green-200/60"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-500">
+                  End date
+                </label>
+                <input
+                  type="date"
+                  value={exportEndDate}
+                  onChange={(event) => setExportEndDate(event.target.value)}
+                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-green-300 focus:ring-4 focus:ring-green-200/60"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleExportPdf}
+                disabled={isExporting}
+                className="h-10 rounded-xl bg-[#4caf58] px-4 text-sm font-medium text-white shadow-lg shadow-green-500/20 transition hover:bg-[#43a04f] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isExporting ? "Exporting..." : "Download PDF"}
+              </button>
+            </div>
+          </div>
+
+          {exportError && (
+            <p className="mt-3 text-sm text-rose-600">
+              {exportError}
+            </p>
+          )}
+        </section>
         <section className="mb-8">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900">
             <Activity className="h-5 w-5 text-green-600" />

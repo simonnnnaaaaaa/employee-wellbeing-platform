@@ -1,5 +1,6 @@
 ﻿using EmployeeWellbeingPlatform.Application.HR.Dtos;
 using EmployeeWellbeingPlatform.Application.Interfaces;
+using EmployeeWellbeingPlatform.Domain.Entities;
 using EmployeeWellbeingPlatform.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,14 +22,27 @@ public class HRDashboardRepository : IHRDashboardRepository
             days = 30;
         }
 
-        var currentPeriodStart = DateTime.UtcNow.AddDays(-days);
-        var previousPeriodStart = DateTime.UtcNow.AddDays(-(days * 2));
-        var previousPeriodEnd = currentPeriodStart;
+        var endDate = DateTime.UtcNow;
+        var startDate = endDate.AddDays(-days);
+
+        return await GetDashboardAsync(startDate, endDate);
+    }
+
+    public async Task<HRDashboardResponseDto> GetDashboardAsync(DateTime startDate, DateTime endDate)
+    {
+        if (endDate <= startDate)
+        {
+            endDate = startDate.AddDays(1);
+        }
+
+        var periodLength = endDate - startDate;
+        var previousPeriodStart = startDate - periodLength;
+        var previousPeriodEnd = startDate;
 
         var currentCheckIns = await _context.CheckIns
             .Include(c => c.User)
             .ThenInclude(u => u.Department)
-            .Where(c => c.CreatedAt >= currentPeriodStart)
+            .Where(c => c.CreatedAt >= startDate && c.CreatedAt <= endDate)
             .ToListAsync();
 
         var previousCheckIns = await _context.CheckIns
@@ -37,6 +51,13 @@ public class HRDashboardRepository : IHRDashboardRepository
                 c.CreatedAt < previousPeriodEnd)
             .ToListAsync();
 
+        return BuildDashboardResponse(currentCheckIns, previousCheckIns);
+    }
+
+    private static HRDashboardResponseDto BuildDashboardResponse(
+        List<CheckIn> currentCheckIns,
+        List<CheckIn> previousCheckIns)
+    {
         var totalCheckIns = currentCheckIns.Count;
 
         var averageStress = totalCheckIns > 0
@@ -83,9 +104,9 @@ public class HRDashboardRepository : IHRDashboardRepository
                 .GroupBy(c => c.Mood)
                 .Select(group => new MoodDistributionDto
                 {
-                     Mood = group.Key,
-                     Count = group.Count(),
-                     Percentage = totalCheckIns > 0
+                    Mood = group.Key,
+                    Count = group.Count(),
+                    Percentage = totalCheckIns > 0
                         ? Math.Round((double)group.Count() / totalCheckIns * 100, 1)
                         : 0
                 })
@@ -97,26 +118,26 @@ public class HRDashboardRepository : IHRDashboardRepository
                 .Select(group =>
                 {
                     var totalDepartmentCheckIns = group.Count();
-                    var averageStress = group.Average(c => c.StressLevel);
-                    var averageEnergy = group.Average(c => c.EnergyLevel);
-                    var highStressCount = group.Count(c => c.StressLevel >= 8);
+                    var departmentAverageStress = group.Average(c => c.StressLevel);
+                    var departmentAverageEnergy = group.Average(c => c.EnergyLevel);
+                    var departmentHighStressCount = group.Count(c => c.StressLevel >= 8);
 
                     var highStressPercentage = totalDepartmentCheckIns > 0
-                        ? (double)highStressCount / totalDepartmentCheckIns * 100
+                        ? (double)departmentHighStressCount / totalDepartmentCheckIns * 100
                         : 0;
 
                     var riskScore = CalculateDepartmentRiskScore(
-                        averageStress,
-                        averageEnergy,
+                        departmentAverageStress,
+                        departmentAverageEnergy,
                         highStressPercentage);
 
                     return new DepartmentWellbeingSummaryDto
                     {
                         Department = group.Key,
                         TotalCheckIns = totalDepartmentCheckIns,
-                        AverageStress = averageStress,
-                        AverageEnergy = averageEnergy,
-                        HighStressCount = highStressCount,
+                        AverageStress = departmentAverageStress,
+                        AverageEnergy = departmentAverageEnergy,
+                        HighStressCount = departmentHighStressCount,
                         RiskScore = riskScore,
                         RiskLevel = GetDepartmentRiskLevel(riskScore)
                     };
@@ -138,9 +159,9 @@ public class HRDashboardRepository : IHRDashboardRepository
     }
 
     private static double CalculateDepartmentRiskScore(
-    double averageStress,
-    double averageEnergy,
-    double highStressPercentage)
+        double averageStress,
+        double averageEnergy,
+        double highStressPercentage)
     {
         var score =
             averageStress * 7

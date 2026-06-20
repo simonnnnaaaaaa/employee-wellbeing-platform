@@ -1,4 +1,5 @@
-﻿using EmployeeWellbeingPlatform.Application.Services;
+﻿using EmployeeWellbeingPlatform.Application.Interfaces;
+using EmployeeWellbeingPlatform.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,11 +11,16 @@ namespace EmployeeWellbeingPlatform.Api.Controllers;
 public class HRController : ControllerBase
 {
     private readonly HRService _hrService;
+    private readonly IHrReportPdfService _hrReportPdfService;
 
-    public HRController(HRService hrService)
+    public HRController(
+        HRService hrService,
+        IHrReportPdfService hrReportPdfService)
     {
         _hrService = hrService;
+        _hrReportPdfService = hrReportPdfService;
     }
+
 
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboard([FromQuery] int days = 30)
@@ -22,5 +28,32 @@ public class HRController : ControllerBase
         var result = await _hrService.GetDashboardAsync(days);
 
         return Ok(result);
+    }
+
+    [HttpGet("export-pdf")]
+    public async Task<IActionResult> ExportPdf(
+    [FromQuery] int days = 30,
+    [FromQuery] DateTime? startDate = null,
+    [FromQuery] DateTime? endDate = null)
+    {
+        byte[] pdfBytes;
+        string fileName;
+
+        if (startDate.HasValue && endDate.HasValue)
+        {
+            pdfBytes = await _hrReportPdfService.GenerateDashboardReportAsync(
+                startDate.Value,
+                endDate.Value);
+
+            fileName = $"HR-Wellbeing-Report-{startDate:yyyy-MM-dd}-to-{endDate:yyyy-MM-dd}.pdf";
+        }
+        else
+        {
+            pdfBytes = await _hrReportPdfService.GenerateDashboardReportAsync(days);
+
+            fileName = $"HR-Wellbeing-Report-{days}-days.pdf";
+        }
+
+        return File(pdfBytes, "application/pdf", fileName);
     }
 }

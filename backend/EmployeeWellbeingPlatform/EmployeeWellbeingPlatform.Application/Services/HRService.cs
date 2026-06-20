@@ -16,4 +16,8 @@ public class HRService
     {
         return await _hrDashboardRepository.GetDashboardAsync(days);
     }
+    public async Task<HRDashboardResponseDto> GetDashboardAsync(DateTime startDate, DateTime endDate)
+    {
+        return await _hrDashboardRepository.GetDashboardAsync(startDate, endDate);
+    }
 }
