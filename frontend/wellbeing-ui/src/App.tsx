@@ -7,6 +7,7 @@ import AdminUsersPage from "./pages/AdminUsersPage";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProfilePage from "./pages/ProfilePage";
 import LandingPage from "./pages/LandingPage";
+import HRDepartmentDrilldownPage from "./pages/HRDepartmentDrilldownPage";
 
 function App() {
     return (
@@ -44,6 +45,14 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <ProfilePage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/hr-dashboard/departments/:departmentName"
+                    element={
+                        <ProtectedRoute requiredRole="HR">
+                            <HRDepartmentDrilldownPage />
                         </ProtectedRoute>
                     }
                 />

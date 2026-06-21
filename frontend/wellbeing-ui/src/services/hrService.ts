@@ -2,6 +2,27 @@ import axios from "axios";
 
 const API_URL = "https://localhost:7258/api/hr";
 
+export type DepartmentDrilldownData = {
+  department: string;
+  totalCheckIns: number;
+  averageStress: number;
+  averageEnergy: number;
+  highStressCount: number;
+  riskScore: number;
+  riskLevel: string;
+  moodDistribution: {
+    mood: string;
+    count: number;
+    percentage: number;
+  }[];
+  dailyTrend: {
+    date: string;
+    averageStress: number;
+    averageEnergy: number;
+    checkInsCount: number;
+  }[];
+};
+
 export async function getHRDashboard(days: number) {
   const token = localStorage.getItem("token");
 
@@ -10,6 +31,26 @@ export async function getHRDashboard(days: number) {
       Authorization: `Bearer ${token}`,
     },
   });
+
+  return response.data;
+}
+
+export async function getDepartmentDrilldown(
+  departmentName: string,
+  days: number
+): Promise<DepartmentDrilldownData> {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.get(
+    `${API_URL}/departments/${encodeURIComponent(
+      departmentName
+    )}/drilldown?days=${days}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   return response.data;
 }

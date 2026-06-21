@@ -8,6 +8,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Extensions\**" />
+    <Compile Remove="Middlewares\**" />
+    <Content Remove="Extensions\**" />
+    <Content Remove="Middlewares\**" />
+    <EmbeddedResource Remove="Extensions\**" />
+    <EmbeddedResource Remove="Middlewares\**" />
+    <None Remove="Extensions\**" />
+    <None Remove="Middlewares\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.16" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.16">
       <PrivateAssets>all</PrivateAssets>
@@ -20,11 +31,6 @@
   <ItemGroup>
     <ProjectReference Include="..\EmployeeWellbeingPlatform.Application\EmployeeWellbeingPlatform.Application.csproj" />
     <ProjectReference Include="..\EmployeeWellbeingPlatform.Infrastructure\EmployeeWellbeingPlatform.Infrastructure.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Middlewares\" />
-    <Folder Include="Extensions\" />
   </ItemGroup>
 
 </Project>

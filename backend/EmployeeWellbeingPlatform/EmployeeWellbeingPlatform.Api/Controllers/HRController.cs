@@ -56,4 +56,17 @@ public class HRController : ControllerBase
 
         return File(pdfBytes, "application/pdf", fileName);
     }
+
+    [HttpGet("departments/{departmentName}/drilldown")]
+    public async Task<IActionResult> GetDepartmentDrilldown(
+    string departmentName,
+    [FromQuery] int days = 30)
+    {
+        var result = await _hrService.GetDepartmentDrilldownAsync(
+            departmentName,
+            days);
+
+        return Ok(result);
+    }
+
 }

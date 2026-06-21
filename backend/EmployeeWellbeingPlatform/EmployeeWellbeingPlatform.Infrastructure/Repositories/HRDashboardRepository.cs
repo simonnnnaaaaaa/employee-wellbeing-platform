@@ -190,4 +190,104 @@ public class HRDashboardRepository : IHRDashboardRepository
 
         return "Critical";
     }
+
+    public async Task<DepartmentDrilldownResponseDto> GetDepartmentDrilldownAsync(
+    string departmentName,
+    int days)
+    {
+        if (days <= 0)
+        {
+            days = 30;
+        }
+
+        var endDate = DateTime.UtcNow;
+        var startDate = endDate.AddDays(-days);
+
+        var checkIns = await _context.CheckIns
+            .Include(c => c.User)
+            .ThenInclude(u => u.Department)
+            .Where(c =>
+                c.CreatedAt >= startDate &&
+                c.CreatedAt <= endDate &&
+                (
+                    c.User.Department != null
+                        ? c.User.Department.Name == departmentName
+                        : departmentName == "Unassigned"
+                ))
+            .ToListAsync();
+
+        var totalCheckIns = checkIns.Count;
+
+        if (totalCheckIns == 0)
+        {
+            return new DepartmentDrilldownResponseDto
+            {
+                Department = departmentName,
+                TotalCheckIns = 0,
+                AverageStress = 0,
+                AverageEnergy = 0,
+                HighStressCount = 0,
+                RiskScore = 0,
+                RiskLevel = "No Data",
+                MoodDistribution = new List<MoodDistributionDto>(),
+                DailyTrend = new List<DepartmentDailyTrendDto>()
+            };
+        }
+
+        var averageStress = totalCheckIns > 0
+            ? checkIns.Average(c => c.StressLevel)
+            : 0;
+
+        var averageEnergy = totalCheckIns > 0
+            ? checkIns.Average(c => c.EnergyLevel)
+            : 0;
+
+        var highStressCount = checkIns.Count(c => c.StressLevel >= 8);
+
+        var highStressPercentage = totalCheckIns > 0
+            ? (double)highStressCount / totalCheckIns * 100
+            : 0;
+
+        var riskScore = CalculateDepartmentRiskScore(
+            averageStress,
+            averageEnergy,
+            highStressPercentage);
+
+        return new DepartmentDrilldownResponseDto
+        {
+            Department = departmentName,
+            TotalCheckIns = totalCheckIns,
+            AverageStress = averageStress,
+            AverageEnergy = averageEnergy,
+            HighStressCount = highStressCount,
+            RiskScore = riskScore,
+            RiskLevel = GetDepartmentRiskLevel(riskScore),
+
+            MoodDistribution = checkIns
+                .Where(c => !string.IsNullOrWhiteSpace(c.Mood))
+                .GroupBy(c => c.Mood)
+                .Select(group => new MoodDistributionDto
+                {
+                    Mood = group.Key,
+                    Count = group.Count(),
+                    Percentage = totalCheckIns > 0
+                        ? Math.Round((double)group.Count() / totalCheckIns * 100, 1)
+                        : 0
+                })
+                .OrderByDescending(item => item.Count)
+                .ToList(),
+
+            DailyTrend = checkIns
+                .GroupBy(c => c.CreatedAt.Date)
+                .Select(group => new DepartmentDailyTrendDto
+                {
+                    Date = group.Key,
+                    AverageStress = group.Average(c => c.StressLevel),
+                    AverageEnergy = group.Average(c => c.EnergyLevel),
+                    CheckInsCount = group.Count()
+                })
+                .OrderBy(item => item.Date)
+                .ToList()
+        };
+    }
 }

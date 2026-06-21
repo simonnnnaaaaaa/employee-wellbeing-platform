@@ -20,4 +20,13 @@ public class HRService
     {
         return await _hrDashboardRepository.GetDashboardAsync(startDate, endDate);
     }
+
+    public async Task<DepartmentDrilldownResponseDto> GetDepartmentDrilldownAsync(
+    string departmentName,
+    int days)
+    {
+        return await _hrDashboardRepository.GetDepartmentDrilldownAsync(
+            departmentName,
+            days);
+    }
 }

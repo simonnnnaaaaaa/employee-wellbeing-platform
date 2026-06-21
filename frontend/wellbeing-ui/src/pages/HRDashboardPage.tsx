@@ -32,6 +32,7 @@ import {
   getHrPredictiveAlerts,
   type HrPredictiveAlert,
 } from "../services/hrPredictiveAlertService";
+import { Link } from "react-router-dom";
 
 type Department = {
   department: string;
@@ -793,10 +794,12 @@ function HRDashboardPage() {
                   : "0.0";
 
               return (
+
                 <div
                   key={dep.department}
                   className="rounded-3xl border border-white/70 bg-white/90 p-6 shadow-sm backdrop-blur transition hover:shadow-md"
                 >
+                  
                   <div className="mb-5 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-100">
@@ -810,6 +813,7 @@ function HRDashboardPage() {
                     <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs text-slate-600">
                       {dep.totalCheckIns} check-ins
                     </span>
+                    
                   </div>
 
                   <div className="mb-4 rounded-2xl bg-slate-50 px-4 py-3">
@@ -868,6 +872,14 @@ function HRDashboardPage() {
                         }
                       />
                     </div>
+                    <Link
+                    to={`/hr-dashboard/departments/${encodeURIComponent(
+                      dep.department
+                    )}?days=${selectedDays}`}
+                    className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-100"
+                  >
+                    View details
+                  </Link>
                   </div>
                 </div>
               );
