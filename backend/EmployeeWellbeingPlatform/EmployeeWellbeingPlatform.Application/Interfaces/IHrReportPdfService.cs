@@ -5,4 +5,6 @@ public interface IHrReportPdfService
     Task<byte[]> GenerateDashboardReportAsync(int days);
 
     Task<byte[]> GenerateDashboardReportAsync(DateTime startDate, DateTime endDate);
+
+    Task<byte[]> GenerateDepartmentReportAsync(string departmentName, int days);
 }

@@ -22,15 +22,23 @@ export async function getMyWellbeingInsight() {
 }
 
 export async function getHrWellbeingSummary(days: number) {
-  const token = localStorage.getItem("token");
-
   const response = await axios.get(
-    `https://localhost:7258/api/ai/hr-wellbeing-summary?days=${days}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
+    `${API_URL}/hr-wellbeing-summary?days=${days}`,
+    getAuthHeaders()
+  );
+
+  return response.data;
+}
+
+export async function getDepartmentWellbeingInsight(
+  departmentName: string,
+  days: number
+) {
+  const response = await axios.get(
+    `${API_URL}/department-wellbeing-insight/${encodeURIComponent(
+      departmentName
+    )}?days=${days}`,
+    getAuthHeaders()
   );
 
   return response.data;

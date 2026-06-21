@@ -36,6 +36,9 @@ builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddHttpClient<IWellbeingAiTextGenerator, OpenAiWellbeingAiTextGenerator>();
 builder.Services.AddHttpClient<IHrWellbeingAiTextGenerator, OpenAiHrWellbeingAiTextGenerator>();
+
+builder.Services.AddHttpClient<IDepartmentWellbeingAiTextGenerator, OpenAiDepartmentWellbeingAiTextGenerator>();
+
 builder.Services.AddScoped<IPredictiveAlertService, PredictiveAlertService>();
 builder.Services.AddScoped<IHrReportPdfService, HrReportPdfService>();
 
@@ -45,6 +48,8 @@ builder.Services.AddScoped<HRService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<WellbeingInsightService>();
 builder.Services.AddScoped<HrWellbeingSummaryService>();
+
+builder.Services.AddScoped<DepartmentWellbeingInsightService>();
 
 
 
