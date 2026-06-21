@@ -16,6 +16,18 @@ public class DepartmentDrilldownResponseDto
 
     public string RiskLevel { get; set; } = string.Empty;
 
+    public double CompanyAverageStress { get; set; }
+
+    public double CompanyAverageEnergy { get; set; }
+
+    public double CompanyRiskScore { get; set; }
+
+    public double StressDifference { get; set; }
+
+    public double EnergyDifference { get; set; }
+
+    public double RiskDifference { get; set; }
+
     public List<MoodDistributionDto> MoodDistribution { get; set; } = new();
 
     public List<DepartmentDailyTrendDto> DailyTrend { get; set; } = new();

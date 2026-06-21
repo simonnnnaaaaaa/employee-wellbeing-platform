@@ -317,4 +317,244 @@ public class HrReportPdfService : IHrReportPdfService
             .Padding(6)
             .Text(text);
     }
+
+    public async Task<byte[]> GenerateDepartmentReportAsync(string departmentName, int days)
+    {
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        if (days <= 0)
+        {
+            days = 30;
+        }
+
+        var department = await _hrService.GetDepartmentDrilldownAsync(
+            departmentName,
+            days);
+
+        var periodLabel = days == 180 ? "Last 6 months" : $"Last {days} days";
+
+        return GenerateDepartmentPdf(department, periodLabel);
+    }
+
+    private static byte[] GenerateDepartmentPdf(
+    DepartmentDrilldownResponseDto department,
+    string periodLabel)
+    {
+        var generatedAt = DateTime.UtcNow;
+        var moodHealthScore = CalculateMoodHealthScore(department.MoodDistribution);
+        var moodHealthLevel = GetMoodHealthLevel(moodHealthScore);
+
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Margin(40);
+                page.Size(PageSizes.A4);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                page.Header()
+                    .Column(column =>
+                    {
+                        column.Item().Text($"Department Wellbeing Report - {department.Department}")
+                            .FontSize(22)
+                            .Bold()
+                            .FontColor(Colors.Green.Darken2);
+
+                        column.Item().Text(periodLabel)
+                            .FontSize(12)
+                            .FontColor(Colors.Grey.Darken1);
+
+                        column.Item().Text($"Generated on {generatedAt:dd MMM yyyy, HH:mm} UTC")
+                            .FontSize(9)
+                            .FontColor(Colors.Grey.Darken1);
+                    });
+
+                page.Content()
+                    .PaddingVertical(25)
+                    .Column(column =>
+                    {
+                        column.Spacing(18);
+
+                        column.Item().Text("Executive Summary")
+                            .FontSize(16)
+                            .Bold();
+
+                        column.Item().Text(BuildDepartmentExecutiveSummary(
+                            department,
+                            moodHealthScore,
+                            moodHealthLevel));
+
+                        column.Item().Text("Department Overview")
+                            .FontSize(16)
+                            .Bold();
+
+                        column.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn();
+                                columns.RelativeColumn();
+                            });
+
+                            AddMetricRow(table, "Total Check-ins", department.TotalCheckIns.ToString());
+                            AddMetricRow(table, "Average Stress", $"{department.AverageStress:0.0}/10");
+                            AddMetricRow(table, "Average Energy", $"{department.AverageEnergy:0.0}/10");
+                            AddMetricRow(table, "High Stress Alerts", department.HighStressCount.ToString());
+                            AddMetricRow(table, "Risk Score", $"{department.RiskScore:0.0}/100 ({department.RiskLevel})");
+                            AddMetricRow(table, "Mood Health Score", $"{moodHealthScore}/100 ({moodHealthLevel})");
+                        });
+
+                        column.Item().Text("Department vs Company")
+                            .FontSize(16)
+                            .Bold();
+
+                        column.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn();
+                                columns.RelativeColumn();
+                                columns.RelativeColumn();
+                                columns.RelativeColumn();
+                            });
+
+                            AddHeaderCell(table, "Metric");
+                            AddHeaderCell(table, "Department");
+                            AddHeaderCell(table, "Company Avg.");
+                            AddHeaderCell(table, "Difference");
+
+                            AddComparisonRow(
+                                table,
+                                "Stress",
+                                department.AverageStress,
+                                department.CompanyAverageStress,
+                                department.StressDifference);
+
+                            AddComparisonRow(
+                                table,
+                                "Energy",
+                                department.AverageEnergy,
+                                department.CompanyAverageEnergy,
+                                department.EnergyDifference);
+
+                            AddComparisonRow(
+                                table,
+                                "Risk Score",
+                                department.RiskScore,
+                                department.CompanyRiskScore,
+                                department.RiskDifference);
+                        });
+
+                        column.Item().Text("Mood Distribution")
+                            .FontSize(16)
+                            .Bold();
+
+                        if (department.MoodDistribution.Any())
+                        {
+                            column.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                });
+
+                                AddHeaderCell(table, "Mood");
+                                AddHeaderCell(table, "Check-ins");
+                                AddHeaderCell(table, "Percentage");
+
+                                foreach (var mood in department.MoodDistribution)
+                                {
+                                    AddCell(table, mood.Mood);
+                                    AddCell(table, mood.Count.ToString());
+                                    AddCell(table, $"{mood.Percentage:0.0}%");
+                                }
+                            });
+                        }
+                        else
+                        {
+                            column.Item().Text("No mood data available for this department.");
+                        }
+
+                        column.Item().Text("Stress & Energy Trend Summary")
+                            .FontSize(16)
+                            .Bold();
+
+                        if (department.DailyTrend.Any())
+                        {
+                            var latestTrend = department.DailyTrend
+                                .OrderByDescending(item => item.Date)
+                                .First();
+
+                            var firstTrend = department.DailyTrend
+                                .OrderBy(item => item.Date)
+                                .First();
+
+                            column.Item().Text(
+                                $"From {firstTrend.Date:dd MMM yyyy} to {latestTrend.Date:dd MMM yyyy}, " +
+                                $"average stress changed from {firstTrend.AverageStress:0.0}/10 to {latestTrend.AverageStress:0.0}/10, " +
+                                $"while average energy changed from {firstTrend.AverageEnergy:0.0}/10 to {latestTrend.AverageEnergy:0.0}/10."
+                            );
+                        }
+                        else
+                        {
+                            column.Item().Text("No trend data available for this department.");
+                        }
+
+                        column.Item().Text("Notes")
+                            .FontSize(16)
+                            .Bold();
+
+                        column.Item().Text(
+                            "This department report is generated from aggregated wellbeing check-ins. It is intended for HR analysis and wellbeing trend monitoring. Individual employee notes are not included."
+                        ).FontColor(Colors.Grey.Darken1);
+                    });
+
+                page.Footer()
+                    .AlignCenter()
+                    .Text("Generated by Employee Wellbeing Platform")
+                    .FontSize(9)
+                    .FontColor(Colors.Grey.Darken1);
+            });
+        }).GeneratePdf();
+    }
+
+    private static string BuildDepartmentExecutiveSummary(
+    DepartmentDrilldownResponseDto department,
+    int moodHealthScore,
+    string moodHealthLevel)
+    {
+        if (department.TotalCheckIns == 0)
+        {
+            return $"There is not enough wellbeing data for {department.Department} during the selected period.";
+        }
+
+        var comparisonText = department.RiskDifference < 0
+            ? $"{department.Department} is performing better than the company average, with a lower risk score by {Math.Abs(department.RiskDifference):0.0} points."
+            : department.RiskDifference > 0
+                ? $"{department.Department} is showing a higher risk score than the company average by {department.RiskDifference:0.0} points."
+                : $"{department.Department} has the same risk score as the company average.";
+
+        return
+            $"During this period, {department.Department} completed {department.TotalCheckIns} check-ins. " +
+            $"The average stress level was {department.AverageStress:0.0}/10 and the average energy level was {department.AverageEnergy:0.0}/10. " +
+            $"There were {department.HighStressCount} high-stress check-ins. " +
+            $"The department risk score is {department.RiskScore:0.0}/100 ({department.RiskLevel}). " +
+            $"The mood health score is {moodHealthScore}/100 ({moodHealthLevel}). " +
+            comparisonText;
+    }
+
+    private static void AddComparisonRow(
+        TableDescriptor table,
+        string metric,
+        double departmentValue,
+        double companyValue,
+        double difference)
+    {
+        AddCell(table, metric);
+        AddCell(table, departmentValue.ToString("0.0"));
+        AddCell(table, companyValue.ToString("0.0"));
+        AddCell(table, $"{difference:+0.0;-0.0;0.0}");
+    }
 }

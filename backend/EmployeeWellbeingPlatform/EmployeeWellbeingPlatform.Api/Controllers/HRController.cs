@@ -69,4 +69,23 @@ public class HRController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("departments/{departmentName}/export-pdf")]
+    public async Task<IActionResult> ExportDepartmentPdf(
+    string departmentName,
+    [FromQuery] int days = 30)
+    {
+        var pdfBytes = await _hrReportPdfService.GenerateDepartmentReportAsync(
+            departmentName,
+            days);
+
+        var safeDepartmentName = departmentName
+            .Replace(" ", "-")
+            .Replace("/", "-")
+            .Replace("\\", "-");
+
+        var fileName = $"HR-Wellbeing-Department-Report-{safeDepartmentName}-{days}-days.pdf";
+
+        return File(pdfBytes, "application/pdf", fileName);
+    }
+
 }

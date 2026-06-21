@@ -203,20 +203,43 @@ public class HRDashboardRepository : IHRDashboardRepository
         var endDate = DateTime.UtcNow;
         var startDate = endDate.AddDays(-days);
 
-        var checkIns = await _context.CheckIns
+        var allCheckIns = await _context.CheckIns
             .Include(c => c.User)
             .ThenInclude(u => u.Department)
-            .Where(c =>
-                c.CreatedAt >= startDate &&
-                c.CreatedAt <= endDate &&
-                (
-                    c.User.Department != null
-                        ? c.User.Department.Name == departmentName
-                        : departmentName == "Unassigned"
-                ))
+            .Where(c => c.CreatedAt >= startDate && c.CreatedAt <= endDate)
             .ToListAsync();
 
+        var checkIns = allCheckIns
+            .Where(c =>
+                c.User.Department != null
+                    ? c.User.Department.Name == departmentName
+                    : departmentName == "Unassigned")
+            .ToList();
+
         var totalCheckIns = checkIns.Count;
+
+        var companyTotalCheckIns = allCheckIns.Count;
+
+        var companyAverageStress = companyTotalCheckIns > 0
+            ? allCheckIns.Average(c => c.StressLevel)
+            : 0;
+
+        var companyAverageEnergy = companyTotalCheckIns > 0
+            ? allCheckIns.Average(c => c.EnergyLevel)
+            : 0;
+
+        var companyHighStressCount = allCheckIns.Count(c => c.StressLevel >= 8);
+
+        var companyHighStressPercentage = companyTotalCheckIns > 0
+            ? (double)companyHighStressCount / companyTotalCheckIns * 100
+            : 0;
+
+        var companyRiskScore = companyTotalCheckIns > 0
+            ? CalculateDepartmentRiskScore(
+                companyAverageStress,
+                companyAverageEnergy,
+                companyHighStressPercentage)
+            : 0;
 
         if (totalCheckIns == 0)
         {
@@ -229,24 +252,24 @@ public class HRDashboardRepository : IHRDashboardRepository
                 HighStressCount = 0,
                 RiskScore = 0,
                 RiskLevel = "No Data",
+
+                CompanyAverageStress = companyAverageStress,
+                CompanyAverageEnergy = companyAverageEnergy,
+                CompanyRiskScore = companyRiskScore,
+                StressDifference = 0 - companyAverageStress,
+                EnergyDifference = 0 - companyAverageEnergy,
+                RiskDifference = 0 - companyRiskScore,
+
                 MoodDistribution = new List<MoodDistributionDto>(),
                 DailyTrend = new List<DepartmentDailyTrendDto>()
             };
         }
 
-        var averageStress = totalCheckIns > 0
-            ? checkIns.Average(c => c.StressLevel)
-            : 0;
-
-        var averageEnergy = totalCheckIns > 0
-            ? checkIns.Average(c => c.EnergyLevel)
-            : 0;
-
+        var averageStress = checkIns.Average(c => c.StressLevel);
+        var averageEnergy = checkIns.Average(c => c.EnergyLevel);
         var highStressCount = checkIns.Count(c => c.StressLevel >= 8);
 
-        var highStressPercentage = totalCheckIns > 0
-            ? (double)highStressCount / totalCheckIns * 100
-            : 0;
+        var highStressPercentage = (double)highStressCount / totalCheckIns * 100;
 
         var riskScore = CalculateDepartmentRiskScore(
             averageStress,
@@ -262,6 +285,13 @@ public class HRDashboardRepository : IHRDashboardRepository
             HighStressCount = highStressCount,
             RiskScore = riskScore,
             RiskLevel = GetDepartmentRiskLevel(riskScore),
+
+            CompanyAverageStress = companyAverageStress,
+            CompanyAverageEnergy = companyAverageEnergy,
+            CompanyRiskScore = companyRiskScore,
+            StressDifference = averageStress - companyAverageStress,
+            EnergyDifference = averageEnergy - companyAverageEnergy,
+            RiskDifference = riskScore - companyRiskScore,
 
             MoodDistribution = checkIns
                 .Where(c => !string.IsNullOrWhiteSpace(c.Mood))
